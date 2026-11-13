@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dice Cup Simulator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#0e2519;--panel:#14352377;--line:#2c5a41;--ink:#eef3e8;--dim:#93b09f;--gold:#f2b632;--goal:#f2b632;--miss:#5b7566;--bad:#e5694f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Barlow,system-ui,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line)}
+h1{font:700 30px 'Barlow Condensed',sans-serif;margin:0;letter-spacing:.5px}
+h2{font:700 22px 'Barlow Condensed',sans-serif;margin:0 0 12px}
+main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;padding:20px 24px;max-width:1200px;margin:auto}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px}
+button,select,input{font:inherit;color:var(--ink);background:#0b1d13;border:1px solid var(--line);border-radius:4px;padding:6px 10px}
+button{cursor:pointer}button:hover{border-color:var(--gold)}
+button.main{background:var(--gold);color:#1b1500;border-color:var(--gold);font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.badge{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:#1d4a31;border:1px solid var(--line);font:700 16px 'Barlow Condensed';overflow:hidden;flex:none}
+.badge img{position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);object-fit:contain;background:#0e2519;border-radius:50%}
+.badge.sm{width:30px;height:30px;font-size:12px}
+table{width:100%;border-collapse:collapse}
+td,th{padding:5px 4px;text-align:left;vertical-align:middle}
+th{color:var(--dim);font-weight:500;font-size:13px}
+td input[type=text]{width:100%}
+td input[type=number]{width:62px}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;margin-bottom:12px}
+.side{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center}
+.side select{width:100%}
+.chances{color:var(--dim);font-size:13px}
+.score{font:700 64px/1 'Barlow Condensed';text-align:center;margin:14px 0 2px;letter-spacing:2px}
+.sub{text-align:center;color:var(--dim);min-height:22px}
+.win{text-align:center;color:var(--gold);font-weight:600;margin:6px 0}
+.phase{margin-top:14px}.phase h3{margin:0 0 6px;font-size:14px;color:var(--dim);font-weight:500}
+.chips{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin:4px 0}
+.chips b{width:84px;font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip{position:relative;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;background:#0b1d13;border:1px solid var(--line);color:var(--ink);font:600 15px 'Barlow Condensed'}
+.chip i{position:absolute;top:0;left:3px;font:500 10px Barlow,sans-serif;font-style:normal;opacity:.75}
+.chip.g{background:var(--goal);border-color:var(--goal);color:#1b1500}
+.slots{display:flex;flex-wrap:wrap;gap:8px 4px}
+.slot{display:flex;flex-direction:column;gap:3px}
+.slot .chip:first-child{border-color:var(--ca)}
+.slot .chip:last-child{border-color:var(--cb)}
+.chip.r{color:var(--miss);background:#09160e}
+.chip.r i{color:var(--ink);opacity:.9}
+.slot .chip.g{border-color:var(--goal)}
+.slot .chip.none{border-color:transparent;background:none}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;margin-top:12px}
+.legend span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.legend .ta::before{background:var(--ca)}.legend .tb::before{background:var(--cb)}
+[hidden]{display:none!important}
+.badge.lg{width:68px;height:68px;font-size:22px}.nm{font:700 18px 'Barlow Condensed'}
+button[data-a=dec],button[data-act=dec]{border-color:#a8442f;color:#ff9a84}
+button[data-a=inc],button[data-act=inc]{border-color:#3f8f55;color:#8be0a0}
+#tabs{display:flex;flex-direction:column;gap:6px;padding:10px 24px 8px;border-bottom:1px solid var(--line)}.trw{display:flex;gap:6px;flex-wrap:wrap;align-items:center}#tabs button.fold{border-style:dashed;color:var(--dim)}#tabs button[draggable]{cursor:grab}
+#tabs button{display:inline-flex;gap:6px;align-items:center}
+#tabs button.on{background:var(--panel);border-color:var(--gold);color:var(--gold)}
+#tabs img{width:18px;height:18px;object-fit:contain}
+.wide{grid-column:1/-1}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.form label{display:flex;flex-direction:column;gap:3px;color:var(--dim);font-size:13px}
+textarea{width:100%;font:inherit;color:var(--ink);background:#0b1d13;border:1px solid var(--line);border-radius:4px;padding:8px;margin:8px 0}
+h3{margin:12px 0 4px;font:700 17px 'Barlow Condensed'}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.mrow{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:3px 0;border-top:1px solid #ffffff12}
+.mrow .h{display:flex;gap:6px;justify-content:flex-end;align-items:center;text-align:right}.mrow .aw{display:flex;gap:6px;align-items:center}
+.mid{min-width:100px;text-align:center}.res{font:700 19px 'Barlow Condensed'}
+.tb tr.q{background:#f2b63218}.tb td{padding:3px 4px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px;margin-top:8px}
+.trow{display:flex;gap:6px;align-items:center}.trow span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.trow input{width:56px}
+.champ{margin-top:10px;font:700 26px 'Barlow Condensed';color:var(--gold);display:flex;gap:8px;align-items:center}
+.cupimg{width:44px;height:44px;object-fit:contain}.tie{margin-bottom:8px}.agg{text-align:center;color:var(--gold);font-size:13px}
+dialog{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:0;width:min(680px,96vw);max-height:92vh}
+dialog::backdrop{background:#000a}dialog section{border:0}
+#mp.fx #selA,#mp.fx #selB,#mp.fx #mode{display:none}
+.pchip{display:inline-flex;gap:6px;align-items:center;background:#0b1d13;border:1px solid var(--line);border-radius:20px;padding:3px 8px}
+.pchip input{width:50px;padding:2px 4px}.pick{margin-top:8px}.pick input{width:100%}
+#sug{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:4px;overflow:hidden}#sug:empty{display:none}
+#sug button{display:flex;gap:8px;align-items:center;text-align:left;border:0;border-radius:0;border-bottom:1px solid #ffffff12}
+tr.rel{background:#e5694f30}summary{cursor:pointer}
+#teams details{margin-bottom:6px;border:1px solid var(--line);border-radius:4px;padding:4px 8px}
+.avcfg{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}.avcfg label input{width:60px}
+#sug{max-height:300px;overflow:auto}#sug button.act{background:#1d4a31;box-shadow:inset 3px 0 var(--gold)}
+tr.pd{background:#f2a53230}tr.up{background:#3f8f5545}tr.pu{background:#9bd05a30}
+tr.lead td{color:var(--gold);font-weight:600}tr.cut td{border-bottom:2px solid var(--gold)}
+.rules input{width:52px}.tb td.d1,.tb td.d2,.tb td.d3{text-align:center}
+td.d1{background:#3f8f55;color:#fff}td.d2{background:#b9a93a;color:#111}td.d3{background:#a34a42;color:#fff}
+.cab{display:flex;gap:10px;align-items:center;margin-bottom:10px}.troph{font-size:19px;filter:drop-shadow(0 0 5px var(--c))}
+.mrow .adv{color:var(--gold);font-weight:700}.mrow .adv .badge{border-color:var(--gold);box-shadow:0 0 0 2px #f2b63255}
+td.p1{background:#e6b422;color:#1b1500;font-weight:700}td.p2{background:#c3c9cf;color:#111;font-weight:700}td.p3{background:#cd8a4f;color:#1b1000;font-weight:700}
+td.l1{background:#f5b3ab;color:#3a0d08}td.l2{background:#ee7d70;color:#2a0803}td.l3{background:#d62e1d;color:#fff;font-weight:700}
+.mx td,.mx th{text-align:center;min-width:34px}.mx td:first-child,.mx th:first-child{position:sticky;left:0;background:#0e2519;text-align:left;min-width:150px;z-index:1}
+.mx tr:hover td{box-shadow:inset 0 2px 0 var(--gold),inset 0 -2px 0 var(--gold)}.mx tr:hover td:first-child{background:#1d4a31;color:var(--gold)}
+.mx tr:hover td:not([class]):not(:first-child){background:#ffffff16}
+.mx tr.top td:first-child{box-shadow:inset 4px 0 var(--gold);background:#2b3a1c;color:var(--gold);font-weight:600}.mx tr.top td:not([class]):not(:first-child){background:#f2b6321a}
+.mx tr:hover td:first-child{background:#1d4a31;color:var(--gold)}
+.mx tr.sel td{box-shadow:inset 0 2px 0 var(--gold),inset 0 -2px 0 var(--gold)}
+.mx tr.sel td:first-child{background:#1d4a31;color:var(--gold);font-weight:700;box-shadow:inset 4px 0 var(--gold),inset 0 2px 0 var(--gold),inset 0 -2px 0 var(--gold)}
+.mx tr.sel td:not([class]):not(:first-child){background:#ffffff16}
+.mx th[data-act]{cursor:pointer;user-select:none}.mx th[data-act]:hover{color:var(--gold)}.tn{display:inline-flex;gap:8px;align-items:center}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:4px 12px;max-height:220px;overflow:auto;margin-top:8px}
+.kogrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:20px;align-items:start}@media(max-width:860px){.kogrid{grid-template-columns:1fr}}
+.facts{border:1px solid var(--line);border-radius:6px;padding:4px 14px 8px;background:#0b1d13}.sidecol{display:flex;flex-direction:column;gap:12px;position:sticky;top:10px;align-self:start}.trow.out{opacity:.38}.facts p{margin:8px 0}
+.chgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px}.chgrid .cell{min-width:0;max-height:640px;overflow:auto}@media(max-width:860px){.chgrid{grid-template-columns:1fr}}
+.sgrid label{display:flex;flex-direction:column;gap:2px}
+.mxw{overflow:auto;max-height:78vh}
+.mx th{position:sticky;top:0;background:#0e2519;z-index:3}.mx th:first-child{z-index:5}
+.mx th.col1{background:#3d3410;color:#f2c94c}.mx th.col2{background:#33383d;color:#d5dade}.mx th.col3{background:#3d2b17;color:#e0a070}
+.mx td.col1{background:#e6b4221f}.mx td.col2{background:#c3c9cf1c}.mx td.col3{background:#cd8a4f22}
+.tb tr.oth td{color:#6f8a7a}.tb tr.sep td{color:var(--dim);font-style:italic;border-top:2px solid var(--line);padding-top:8px}
+.plusb{width:30px;height:30px;padding:0;border:1px dashed var(--gold);color:var(--gold);font-weight:700}
+.chip.xt{outline:2px dashed #8be0a0;outline-offset:1px}
+#teams details.oth{opacity:.6}
+.tr{display:inline-block}.tr-silver{filter:grayscale(1) brightness(1.3)}.tr-blue{filter:hue-rotate(165deg) saturate(1.7)}
+.troph.tr-silver{filter:grayscale(1) brightness(1.3) drop-shadow(0 0 5px var(--c))}
+input:disabled,select:disabled{opacity:.35}label:has(:disabled){color:#59705f}
+.pos{color:#7be08f}.neg{color:#ff8f7a}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:12px;padding:1px 9px;margin:2px;background:#0b1d13}
+#mp.fx .qm{display:none}
+.stk th{position:sticky;top:0;background:#0e2519;z-index:2}
+@media(max-width:860px){.kogrid .sidecol{order:-1;position:static}}
+.tcol{display:flex;flex-direction:column;align-items:flex-end}.aw .tcol{align-items:flex-start}.tinfo{display:block;font-size:12px;line-height:1.25;white-space:nowrap}
+.stk tr.sel td{background:#2b3a1c;color:var(--gold)}.tb td.p4{background:#2f4a3c;color:#e8f3ea;font-weight:700}
+.tb td.me{background:#2b3a1c;font-weight:700}.tb td.me span{color:var(--gold)}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px}@media(max-width:520px){.hgrid{grid-template-columns:1fr}}
+.hcard,.scard{border:1px solid var(--line);border-radius:6px;padding:10px 14px;background:#0b1d13}.hcard .mrow{font-size:14px}
+.bar{height:6px;background:#1d3a2b;border-radius:3px;margin:6px 0 8px}.bar i{display:block;height:100%;background:var(--gold);border-radius:3px}
+.att{margin-bottom:6px;justify-content:space-between;border-bottom:1px solid #ffffff10;padding-bottom:6px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:12px 0}.statgrid b{font-size:20px}
+.rrow{padding:3px 0;border-bottom:1px solid #ffffff10}
+.mv{font-size:10px;margin-left:5px;vertical-align:1px}.mv.up{color:#7be08f}.mv.dn{color:#ff8f7a}
+.mx th.selc,.mx td.selc{box-shadow:inset 2px 0 0 var(--gold),inset -2px 0 0 var(--gold)}.mx th.selc{color:var(--gold)}
+.mx td.selc:empty{background:#f2b6321a}
+.mx tr.sel td.selc,.mx tr:hover td.selc{box-shadow:inset 2px 0 0 var(--gold),inset -2px 0 0 var(--gold),inset 0 2px 0 var(--gold),inset 0 -2px 0 var(--gold)}
+.jr{margin-top:8px;text-align:center}.jr button{display:block;margin:2px auto}.kb{background:none;border:none;color:var(--dim)}.kb:hover{color:var(--gold)}
+.lay{border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin-top:6px}.cc{display:inline-flex;align-items:center;gap:5px;margin-right:8px}.sws{display:inline-flex;gap:3px;flex-wrap:wrap}
+.sw{width:15px;height:15px;padding:0;border:1px solid #ffffff66;border-radius:3px}
+.note{color:var(--dim);font-size:13px;margin-top:8px}
+.link{background:none;border:none;color:var(--bad);padding:2px 6px}
+#msg{color:var(--gold);font-size:13px;min-height:18px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Dice Cup Simulator</h1>
+  <div class="row">
+    <span id="lastexp" class="note"></span><span id="msg"></span>
+    <button id="exp">Export save</button>
+    <button id="imp">Import save</button>
+    <input type="file" id="file" accept=".json" hidden>
+  </div>
+</header>
+<nav id="tabs"></nav>
+<main id="v-quick">
+  <section id="mp">
+    <h2>Match</h2>
+    <div class="vs">
+      <div class="side"><div id="bA"></div><select id="selA"></select><div class="chances" id="cA"></div><div class="jr" id="jA"></div><label class="note qm">chances modifier <input id="qa" type="number" value="0" style="width:70px"></label></div>
+      <div style="padding-top:12px;color:var(--dim)">vs</div>
+      <div class="side"><div id="bB"></div><select id="selB"></select><div class="chances" id="cB"></div><div class="jr" id="jB"></div><label class="note qm">chances modifier <input id="qb" type="number" value="0" style="width:70px"></label></div>
+    </div>
+    <div class="row" style="justify-content:center">
+      <select id="mode"><option value="league">League (draw allowed)</option><option value="ko">Knockout (extra time + penalties)</option></select>
+      <button class="main" id="play">Play match</button><button class="main" id="sv" hidden>Save result</button><button id="cl" hidden>Close</button>
+      <select id="speed" aria-label="Speed"><option value="150">Fast</option><option value="380">Normal</option><option value="1000">Slow</option><option value="0">Instant</option></select>
+    </div>
+    <div class="score" id="score">–</div>
+    <div class="sub" id="sub"></div>
+    <div class="win" id="win"></div>
+    <div id="log"></div>
+    <p class="note">Bright digits are chances still to roll. Each one greys out with the dice result in its corner, and gold means it matched. A team with fewer chances has them spread evenly across the match. Extra time: the first 1–3 digits, based on strength. Penalties: 5 kicks each, a 3–6 scores, then sudden death.</p>
+  </section>
+  <section>
+    <div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">Team library</h2><input id="tsearch" type="search" placeholder="Search teams or countries…" style="width:230px"></div>
+    <details style="margin-bottom:8px"><summary>Merge two teams</summary><p class="note">For a team created by mistake (a typo in an import, for example): everything of the wrong team moves to the right one and the wrong team is deleted.</p><div class="row"><input id="mgf" list="dl-mg" placeholder="Wrong team (will disappear)" style="width:240px"><input id="mgt" list="dl-mg" placeholder="Right team (keeps everything)" style="width:240px"><button id="mgb">Merge</button></div><datalist id="dl-mg"></datalist></details>
+    <div id="teams"></div>
+    <div class="row" style="margin-top:10px"><button id="add">Add team</button><button id="findall" title="Only looks up teams that have no logo yet; teams with a logo are never touched">Find all missing logos</button></div>
+    <p class="note">This is your reusable library: logos, colours and countries are saved once and reused by every cup. The chances here are the default; each cup keeps its own copy. "Find" tries TheSportsDB (badge, colour, country) by team name, or paste any image URL.</p>
+  </section>
+</main>
+<main id="v-cup" hidden></main>
+<dialog id="dlg"></dialog>
+<script>
+const KEY='dice-cup-sim-v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+let S=load()||{teams:[
+  {id:uid(),name:'Atlas FC',strength:15,logo:''},
+  {id:uid(),name:'Borealis',strength:10,logo:''},
+  {id:uid(),name:'Cobre United',strength:7,logo:''},
+  {id:uid(),name:'Dunas',strength:4,logo:''}],
+  selA:null,selB:null,mode:'league'};
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){msg('Could not autosave in this browser. Use Export save.')}}
+function msg(t){$('#msg').textContent=t;clearTimeout(msg.t);msg.t=setTimeout(()=>$('#msg').textContent='',4000)}
+const team=id=>S.teams.find(t=>t.id===id);
+const byName=(a,b)=>a.name.localeCompare(b.name);
+
+/* ---------- engine ---------- */
+const d6=()=>1+Math.floor(Math.random()*6);
+const etChances=s=>Math.min(3,Math.max(1,Math.round(s/5)));
+
+function phase(ph,nA,nB){
+  const ev=[],L=Math.max(nA,nB),n=[nA,nB];
+  // the team with fewer chances gets them spread evenly along the longer team's timeline
+  const at=n.map(c=>{const a=Array(L).fill(null);for(let k=0;k<c;k++)a[c===L?k:Math.floor((k+.5)*L/c)]=k;return a});
+  for(let s=0;s<L;s++)for(const side of [0,1]){
+    const k=at[side][s];if(k===null)continue;
+    const tg=(k%6)+1,r=d6();
+    ev.push({ph,side,slot:s,roll:r,target:tg,goal:r===tg});
+  }
+  return ev;
+}
+function penalties(){
+  const ev=[],p=[0,0],t=[0,0];
+  const over=()=>(t[0]<5||t[1]<5)?(p[0]>p[1]+(5-t[1])||p[1]>p[0]+(5-t[0])):(t[0]===t[1]&&p[0]!==p[1]);
+  for(let k=0;k<200;k++){
+    for(const side of [0,1]){
+      const r=d6(),goal=r>=3;
+      ev.push({ph:'pen',side,slot:t[side],roll:r,goal});
+      t[side]++;if(goal)p[side]++;
+      if(over())return ev;
+    }
+  }
+  return ev;
+}
+function simulate(A,B,mode,carry=[0,0]){
+  let ev=phase('reg',A.strength,B.strength);
+  const g=()=>[0,1].map(s=>ev.filter(e=>e.ph!=='pen'&&e.side===s&&e.goal).length+carry[s]);
+  if(mode==='etpen'&&g()[0]===g()[1]) ev=ev.concat(phase('et',etChances(A.strength),etChances(B.strength)));
+  if(mode&&g()[0]===g()[1]) ev=ev.concat(penalties());
+  ev.forEach((e,i)=>e.i=i);
+  return ev;
+}
+function tally(ev){
+  const play=[0,0],pen=[0,0];
+  ev.forEach(e=>{if(e.goal)(e.ph==='pen'?pen:play)[e.side]++});
+  return {play,pen,hasPen:ev.some(e=>e.ph==='pen')};
+}
+
+/* ---------- rendering ---------- */
+function badge(t,sz){
+  const ini=esc(t.name.split(/\s+/).map(w=>w[0]).join('').slice(0,3).toUpperCase());
+  const img=t.logo?`<img src="${esc(t.logo)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:'';
+  return `<span class="badge ${sz||''}">${ini}${img}</span>`;
+}
+function renderSelects(){
+  const opts=S.teams.slice().sort(byName).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  ['A','B'].forEach((k,i)=>{
+    const sel=$('#sel'+k);sel.innerHTML=opts;
+    const key='sel'+k;
+    if(!team(S[key]))S[key]=S.teams[Math.min(i,S.teams.length-1)]?.id||null;
+    sel.value=S[key];
+  });
+  renderSides();
+}
+function renderSides(){
+  ['A','B'].forEach((k,i)=>{
+    const t=CTX?(i?CTX.B:CTX.A):team(S['sel'+k]);
+    $('#b'+k).innerHTML=t?badge(t,'lg')+(CTX?`<div class="nm">${esc(t.name)}</div>${CTX.info&&CTX.info[i]?`<div class="note">${CTX.info[i]}</div>`:''}`:''):'';
+    $('#c'+k).textContent=t?t.strength+' chances'+(t.bonus?' (incl. +'+t.bonus+' home)':''):'';
+  });
+  updMods();renderKits();
+}
+
+function teamRow(t){return `<tr data-id="${t.id}">
+    <td data-tp="${t.id}" title="Open the team page" style="cursor:pointer">${badge(t,'sm')}</td>
+    <td><input type="text" data-f="name" value="${esc(t.name)}" aria-label="Team name"><input type="text" data-f="country" value="${esc(t.country||'')}" placeholder="Country" aria-label="Country" style="margin-top:3px"></td>
+    <td><div class="row" style="gap:3px;flex-wrap:nowrap"><button data-a="dec" title="−1 chance">−1</button><input type="number" min="0" data-f="strength" value="${t.strength}" aria-label="Chances"><button data-a="inc" title="+1 chance">+1</button></div></td>
+    <td><input type="text" data-f="logo" value="${esc(t.logo)}" placeholder="https://…" aria-label="Logo URL"><div class="row" style="margin-top:3px"><button data-a="find">Find</button><input type="color" data-f="color" value="${t.color||'#2c5a41'}" title="Team colour" style="padding:0;width:34px;height:30px"></div></td>
+    <td><button class="link" data-a="del" title="Delete team">✕</button></td></tr>`}
+let LQ='';const openC=new Set();
+function renderTeams(){
+  const by={};S.teams.filter(t=>!LQ||t.name.toLowerCase().includes(LQ)||(t.country||'').toLowerCase().includes(LQ)).forEach(t=>{(by[t.country||'No country']=by[t.country||'No country']||[]).push(t)});
+  const kr=k=>k==='No country'?2:k.toLowerCase()==='others'?1:0,keys=Object.keys(by).sort((a,b)=>kr(a)-kr(b)||a.localeCompare(b));
+  fillMG();
+  $('#teams').innerHTML=keys.map(k=>`<details data-c="${esc(k)}" class="${k.toLowerCase()==='others'?'oth':''}" ${(LQ||openC.has(k))?'open':''}><summary>${esc(k)} <span class="note">(${by[k].length})</span></summary><table>${by[k].sort(byName).map(teamRow).join('')}</table></details>`).join('');
+  renderSelects();
+}
+function chip(e,k){
+  if(!e)return '<span class="chip none"></span>';
+  const done=e.i<k,pen=e.ph==='pen';
+  const cls='chip'+(done?(e.goal?' g':' r'):'')+(e.x?' xt':'');
+  const tip=pen?'Rolled '+e.roll:'Needed '+e.target+(done?', rolled '+e.roll:'');
+  return `<span class="${cls}" title="${tip}">${done&&!pen?'<i>'+e.roll+'</i>':''}${pen?e.roll:e.target}</span>`;
+}
+function slots(evs,k,plus){
+  const L=evs.reduce((m,e)=>Math.max(m,e.slot+1),0),out=[];
+  for(let s=0;s<L;s++){
+    const a=evs.find(e=>e.side===0&&e.slot===s),b=evs.find(e=>e.side===1&&e.slot===s);
+    out.push(`<div class="slot">${chip(a,k)}${chip(b,k)}</div>`);
+  }
+  if(plus)out.push(`<div class="slot"><button class="plusb" data-xt="0" title="One more chance for ${esc(CUR.A.name)}">+</button><button class="plusb" data-xt="1" title="One more chance for ${esc(CUR.B.name)}">+</button></div>`);
+  return `<div class="slots">${out.join('')}</div>`;
+}
+function renderMatch(ev,k,A,B,done){
+  const rev=ev.slice(0,k),{play,pen,hasPen}=tally(rev),canPlus=done&&ev.length&&ev.every(x=>x.ph==='reg');
+  $('#score').textContent=`${play[0]} – ${play[1]}`;
+  $('#sub').textContent=hasPen?`Penalties ${pen[0]} – ${pen[1]}`:'';
+  const names={reg:'Regular time',et:'Extra time',pen:'Penalties'};
+  const legend=`<div class="legend"><span class="ta">${esc(A.name)} (${ev.filter(e=>e.ph==='reg'&&e.side===0).length})</span><span class="tb">${esc(B.name)} (${ev.filter(e=>e.ph==='reg'&&e.side===1).length})</span></div>`;
+  $('#log').innerHTML=legend+['reg','et','pen'].map(ph=>{
+    let e=ev.filter(x=>x.ph===ph);
+    if(ph==='et'&&!rev.some(x=>x.ph==='et'))e=[];
+    if(ph==='pen')e=e.filter(x=>x.i<k);
+    return e.length?`<div class="phase"><h3>${names[ph]}</h3>${slots(e,k,ph==='reg'&&canPlus)}</div>`:'';
+  }).join('');
+  $('#log').style.setProperty('--ca',vis(A.color)||'#4f8fb0');
+  $('#log').style.setProperty('--cb',vis(B.color)||'#b0724f');
+  const cr=CTX?CTX.carry:[0,0],tot=[play[0]+cr[0],play[1]+cr[1]];
+  if(CTX&&CTX.two)$('#sub').textContent=`Aggregate ${tot[0]} – ${tot[1]}`+(hasPen?` · Penalties ${pen[0]} – ${pen[1]}`:'');
+  let w='';
+  if(done){
+    if(tot[0]!==tot[1])w=`${esc((tot[0]>tot[1]?A:B).name)} ${CTX&&CTX.two?'advance':'win'}`;
+    else if(hasPen)w=`${esc((pen[0]>pen[1]?A:B).name)} win on penalties`;
+    else w='Draw';
+  }
+  if(done&&!CTX&&CUR&&!CUR.mode&&tot[0]===tot[1]&&!hasPen&&ev.every(x=>x.ph==='reg'))w+=' <button class="main" data-etx="1" style="margin-left:10px">Add extra time and penalties</button>';
+  $('#win').innerHTML=w;
+  $('#sv').hidden=!(done&&CTX);
+}
+
+/* ---------- play ---------- */
+let token=0,RESUME=null;
+$('#play').onclick=()=>{
+  const A0=CTX?CTX.A:team(S.selA),B0=CTX?CTX.B:team(S.selB);
+  const mA=CTX||!A0?0:parseInt($('#qa').value)||0,mB=CTX||!B0?0:parseInt($('#qb').value)||0;   // modifiers only change this match
+  const A=A0&&{...A0,strength:Math.max(0,A0.strength+mA)},B=B0&&{...B0,strength:Math.max(0,B0.strength+mB)};
+  if(!A||!B||(!CTX&&A.id===B.id)){msg('Pick two different teams.');return}
+  if(!CTX){$('#qa').value=0;$('#qb').value=0;updMods()}
+  CUR={A,B,mode:CTX?CTX.mode:(S.mode==='ko'&&'etpen'),carry:CTX?CTX.carry:[0,0]};
+  const ev=simulate(A,B,CUR.mode,CUR.carry),my=++token;
+  LAST=ev;RESUME=null;$('#sv').hidden=true;if(CTX)$('#play').hidden=true;
+  const sp=parseInt($('#speed').value);
+  if(!sp){renderMatch(ev,ev.length,A,B,true);return}
+  let k=0;
+  renderMatch(ev,0,A,B,!ev.length);
+  const step=()=>{
+    if(my!==token)return;
+    k++;renderMatch(ev,k,A,B,k>=ev.length);
+    if(k<ev.length){
+      const nx=ev[k];
+      if((nx.ph==='et'||nx.ph==='pen')&&ev[k-1].ph!==nx.ph){   // a moment to take in the draw
+        $('#win').innerHTML=`<button class="main" data-go="1">${nx.ph==='et'?'Start extra time':'Start penalties'}</button>`;
+        RESUME=()=>{if(my===token)step()};return;
+      }
+      setTimeout(step,nx.ph==='pen'?sp*2.2:sp);
+    }
+  };
+  if(ev.length)setTimeout(step,sp);
+};
+
+/* ---------- events ---------- */
+$('#selA').onchange=e=>{S.selA=e.target.value;$('#qa').value=0;KITSEL={};save();renderSides()};
+$('#selB').onchange=e=>{S.selB=e.target.value;$('#qb').value=0;KITSEL={};save();renderSides()};
+$('#mode').value=S.mode;
+$('#mode').onchange=e=>{S.mode=e.target.value;save()};
+$('#speed').value=S.speed||'380';if(!$('#speed').value)$('#speed').value='380';
+$('#speed').onchange=e=>{S.speed=e.target.value;save()};
+$('#add').onclick=()=>{S.teams.push({id:uid(),name:'New team',strength:6,logo:'',color:'',country:''});openC.add('No country');save();renderTeams()};
+
+$('#teams').addEventListener('input',e=>{
+  const tr=e.target.closest('tr'),f=e.target.dataset.f;if(!tr||!f)return;
+  const t=team(tr.dataset.id);
+  t[f]=f==='strength'?Math.max(0,parseInt(e.target.value)||0):e.target.value;
+  save();
+  if(f==='name'){const v=[$('#selA').value,$('#selB').value];
+    $('#selA').innerHTML=$('#selB').innerHTML=S.teams.slice().sort(byName).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+    $('#selA').value=v[0];$('#selB').value=v[1];}
+  renderSides();
+});
+$('#teams').addEventListener('change',e=>{if(['logo','strength','country'].includes(e.target.dataset.f))setTimeout(renderTeams,0)});
+$('#teams').addEventListener('click',async e=>{
+  const tp=e.target.closest('[data-tp]');if(tp){TP=tp.dataset.tp;show('team');return}
+  const a=e.target.dataset.a;if(!a)return;
+  const t=team(e.target.closest('tr').dataset.id);
+  if(a==='inc')t.strength++;
+  if(a==='dec')t.strength=Math.max(0,t.strength-1);
+  if(a==='del'){if(S.teams.length<=2){msg('Keep at least two teams.');return}if(S.comps.some(c=>c.teams.some(x=>x.id===t.id))){msg('This team is used in a cup.');return}S.teams=S.teams.filter(x=>x!==t)}
+  if(a==='find'){
+    try{msg('Searching…');if(!(await findLogo(t))){msg('No badge found for "'+t.name+'". Paste a URL instead.');return}msg('Badge found.')}
+    catch(err){msg('Lookup failed. Paste an image URL instead.');return}
+  }
+  save();renderTeams();
+});
+
+$('#exp').onclick=()=>{
+  S.lastExport=Date.now();save();
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='dice-cup-save-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);showExp();
+};
+$('#imp').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{
+  try{
+    const j=JSON.parse(await e.target.files[0].text());
+    if(!Array.isArray(j.teams))throw 0;
+    if(!confirm('Import this file? It REPLACES everything currently saved in this browser (library, leagues, cups, tables) with what is in the file.')){e.target.value='';return}
+    S=j;fixSave();save();$('#mode').value=S.mode||'league';renderTeams();show('home');showExp();msg('Save imported.');
+  }catch(err){msg('That file is not a valid save.')}
+  e.target.value='';
+};
+
+
+/* ---------- logos & colours ---------- */
+async function findLogo(t){
+  const r=await fetch('https://www.thesportsdb.com/api/v1/json/123/searchteams.php?t='+encodeURIComponent(t.name));
+  const h=((await r.json()).teams||[])[0],url=h&&(h.strBadge||h.strTeamBadge||h.strLogo);
+  if(!url)return false;
+  t.logo=url;
+  const c=h.strColour1&&('#'+String(h.strColour1).replace('#',''));
+  if(/^#[0-9a-f]{6}$/i.test(c||''))t.color=c;
+  if(!t.country&&h.strCountry)t.country=h.strCountry;
+  return true;
+}
+$('#findall').onclick=async()=>{
+  let n=0;
+  for(const t of S.teams.filter(t=>!t.logo)){msg('Searching '+t.name+'…');try{if(await findLogo(t))n++}catch(e){}await new Promise(r=>setTimeout(r,400))}
+  save();renderTeams();msg(n+' badges found.');
+};
+function vis(c){ // lighten very dark colours so the border stays visible
+  if(!/^#[0-9a-f]{6}$/i.test(c||''))return null;
+  const n=parseInt(c.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;
+  if(.299*r+.587*g+.114*b>90)return c;
+  const m=x=>Math.round(x+(255-x)*.5);return `rgb(${m(r)},${m(g)},${m(b)})`;
+}
+
+/* ---------- competitions ---------- */
+let view='quick',CTX=null,LAST=null,teamsOpen=false,CARRY=null,QUEUE=[],statsSel=null,SUGI=0;
+const comp=id=>S.comps.find(c=>c.id===id);
+const tm=(c,id)=>{const t=team(id),x=c.teams.find(y=>y.id===id)||(c.xs||[]).find(y=>y.id===id);return t&&{...t,strength:x?x.s:t.strength}};
+const allM=c=>[...c.gm,...(c.po||[]),...(c.dm||[]),...(c.third?c.third.legs:[]),...c.ko.flatMap(r=>r.ties.flatMap(T=>T.legs))];
+const findM=(c,id)=>allM(c).find(m=>m.id===id);
+const findTie=(c,id)=>[...c.ko.flatMap(r=>r.ties),...(c.third?[c.third]:[])].find(T=>T.id===id);
+const sides=(c,m)=>{const H=tm(c,m.h),A=tm(c,m.a);if(c.type==='league'&&c.hb&&!m.po){H.strength+=c.hb;H.bonus=c.hb}return [H,A]};
+const shuffle=a=>a.slice().sort(()=>Math.random()-.5);
+
+const randColor=()=>`hsl(${Math.floor(Math.random()*360)} 65% 58%)`;
+function tabBtn(c){
+  return `<button draggable="true" data-v="${c.id}" data-c="1" class="${view===c.id?'on':''}" ${c.color?`style="box-shadow:inset 0 3px 0 ${c.color}"`:''}>${c.photo?`<img src="${esc(c.photo)}" alt="" onerror="this.remove()">`:''}${esc(c.name)}${c.closed?' ✓':''}</button>`;
+}
+function renderTabs(){
+  const fo=S.fo||{};
+  const row=(k,label,list)=>{
+    if(!list.length)return '';
+    const open=fo[k]!==false;
+    return `<div class="trw"><button class="fold" data-fold="${k}">📁 ${label} (${list.length}) ${open?'▾':'▸'}</button>${(open?list:list.filter(c=>c.id===view)).map(tabBtn).join('')}</div>`;
+  };
+  const on=v=>view===v?'on':'';
+  $('#tabs').innerHTML=`<div class="trw"><button data-v="home" class="${on('home')}">Home${attN()}</button><button data-v="quick" class="${on('quick')}">Quick match</button><button data-v="d1" class="${on('d1')}">First division</button><button data-v="stats" class="${on('stats')}">Divisions</button><button data-v="tables" class="${on('tables')}">League tables</button><button data-v="cups" class="${on('cups')}">Cups table</button><button data-v="rules" class="${on('rules')}">Cups points</button><button data-v="nat" class="${on('nat')}">National points</button><button data-v="champs" class="${on('champs')}">Champions</button><button data-v="team" class="${on('team')}">Team page</button><button data-v="records" class="${on('records')}">Records</button><button data-v="new" class="${on('new')}">+ New</button></div>`+
+    row('league','Leagues',S.comps.filter(c=>c.type==='league'))+row('cup','Cups',S.comps.filter(c=>c.type!=='league'));
+}
+function show(v){
+  view=v;$('#v-quick').hidden=v!=='quick';$('#v-cup').hidden=v==='quick';renderTabs();
+  if(v==='new')renderNew();else if(v==='quick')renderSides();else if(v==='stats')renderStats();else if(v==='champs')renderChamps();else if(v==='d1')renderD1();else if(v==='cups')renderCups();else if(v==='tables')renderTables();else if(v==='rules')renderRules();else if(v==='nat')renderNat();else if(v==='home')renderHome();else if(v==='team')renderTeamPage();else if(v==='records')renderRecords();else renderCup();
+}
+$('#tabs').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.fold){const k=b.dataset.fold;S.fo=S.fo||{};S.fo[k]=S.fo[k]===false;save();renderTabs();return}
+  if(b.dataset.v==='new'){CARRY=null;QUEUE=[]}
+  show(b.dataset.v);
+};
+let DRAG=null;
+$('#tabs').addEventListener('dragstart',e=>{const b=e.target.closest('[data-c]');if(b){DRAG=b.dataset.v;e.dataTransfer.effectAllowed='move'}});
+$('#tabs').addEventListener('dragover',e=>{if(DRAG&&e.target.closest('[data-c]'))e.preventDefault()});
+$('#tabs').addEventListener('drop',e=>{
+  const t=e.target.closest('[data-c]');if(!DRAG||!t||t.dataset.v===DRAG)return;
+  e.preventDefault();
+  const idx=id=>S.comps.findIndex(c=>c.id===id),a=idx(DRAG),b0=idx(t.dataset.v),[x]=S.comps.splice(a,1),b=idx(t.dataset.v);
+  S.comps.splice(a<b0?b+1:b,0,x);DRAG=null;save();renderTabs();
+});
+$('#tabs').addEventListener('dragend',()=>{DRAG=null});
+
+
+let PICK=[];
+function renderNew(){
+  PICK=[];
+  $('#v-cup').innerHTML=`<section class="wide"><h2>New competition</h2><div class="form">
+  <label>Name (optional)<input id="nn" type="text" placeholder="Empty = series + edition"></label>
+  <label>Photo URL<input id="np" type="text" placeholder="https://…"></label>
+  <label>Format<select id="nt"><option value="groups">Cup: groups of 4 (top 2 advance) + knockout</option><option value="ko">Cup: straight knockout</option><option value="league">League: everyone plays everyone</option></select></label>
+  <label>Number of teams<input id="nc" type="number" min="2" value="8"></label>
+  <label class="gl">Group / league matches<select id="ng"><option value="single">Single round-robin</option><option value="double">Home and away</option></select></label>
+  <label class="kn">Knockout ties (the final and the 3rd place match are always single)<select id="na"><option value="single">Single match</option><option value="twoPens">Home and away, tied aggregate → penalties</option><option value="twoET">Home and away, tied aggregate → extra time + penalties</option></select></label>
+  <label class="lg">League season (e.g. 2020)<input id="nse" list="dl-seasons" placeholder="2020"></label>
+  <label class="row lg"><input id="nof" type="checkbox" checked style="width:auto"> Official (counts in Stats)</label>
+  <label class="cp">Cup series (e.g. Copa Libertadores)<input id="nsr" list="dl-series"></label>
+  <label class="cp">Cup edition / year<input id="ned" placeholder="2020"></label>
+  <label class="lg">League: division (1 = first)<input id="ndv" type="number" min="1" value="1"></label>
+  <label class="lg">League: home advantage (extra chances)<input id="nh" type="number" min="0" value="2"></label>
+</div>
+  <table class="tb rules lg" style="margin-top:10px"><tr><th>League rules (number of teams)</th><th>By averages</th><th>By position</th></tr>
+  <tr><td>Relegated</td><td><input id="nra" type="number" min="0" value="2"></td><td><input id="nrb" type="number" min="0" value="0"></td></tr>
+  <tr><td>Relegation play-off</td><td><input id="npa" type="number" min="0" value="0"></td><td><input id="npb" type="number" min="0" value="0"></td></tr>
+  <tr><td>Promoted (division 2 or lower)</td><td><input id="nua" type="number" min="0" value="0"></td><td><input id="nub" type="number" min="0" value="0"></td></tr>
+  <tr><td>Promotion play-off (division 2 or lower)</td><td><input id="nqa" type="number" min="0" value="0"></td><td><input id="nqb" type="number" min="0" value="0"></td></tr></table>
+  <h3>Teams <span id="cnt" class="note"></span> <button data-act="lastteams" style="margin-left:10px">Use last edition's teams</button></h3>
+  <div id="chips"></div>
+  <div class="pick"><input id="ps" type="text" placeholder="Type a team name…" autocomplete="off"><div id="sug"></div></div>
+  <div class="row" style="margin-top:12px"><button class="main" data-act="mk">Create</button><span id="nerr" style="color:var(--bad)"></span></div>${dls()}</section>`;
+  syncForm();renderPicked();
+}
+function applyDefaults(sr){ // a new edition starts from the parameters of the previous one
+  const d=S.sdef[sr];if(!d||!$('#nn'))return;
+  const v=(id,x)=>{$('#'+id).value=x},nn=$('#nn');
+  v('nt',d.type);v('nc',d.n);v('ng',d.legs||'single');v('na',d.agg||'single');if(d.photo&&!$('#np').value)v('np',d.photo);
+  if(!nn.value||nn.value==='My Cup'||nn.dataset.auto){nn.value=sr+($('#ned').value.trim()?' '+$('#ned').value.trim():'');nn.dataset.auto='1'}
+  syncForm();renderPicked();msg('Same parameters as the last '+sr+'. Change anything you need.');
+}
+function syncForm(){
+  const t=$('#nt').value,sh=(c,on)=>document.querySelectorAll('#v-cup .'+c).forEach(e=>{e.hidden=!on});
+  sh('lg',t==='league');sh('cp',t!=='league');sh('gl',t!=='ko');sh('kn',t!=='league');
+  $('#ng').disabled=t==='ko';['nse','nof'].forEach(id=>$('#'+id).disabled=t!=='league');['nsr','ned'].forEach(id=>$('#'+id).disabled=t==='league');$('#na').disabled=t==='league';
+  ['ndv','nh','nra','nrb','npa','npb'].forEach(id=>$('#'+id).disabled=t!=='league');
+  ['nua','nub','nqa','nqb'].forEach(id=>$('#'+id).disabled=t!=='league'||(parseInt($('#ndv').value)||1)<2);
+}
+function renderPicked(){
+  const chip=x=>{const t=team(x.id);return `<span class="pchip" data-id="${x.id}">${badge(t,'sm')}${esc(t.name)}<input type="number" min="0" value="${x.s}" data-act="pst" title="Chances"><button class="link" data-act="unpick" title="Remove">✕</button></span>`};
+  const by={};PICK.forEach(x=>{const k=(team(x.id).country||'').trim()||'No country';(by[k]=by[k]||[]).push(x)});
+  $('#chips').innerHTML=Object.keys(by).sort((a,b)=>a==='No country'?1:b==='No country'?-1:a.localeCompare(b)).map(k=>`<div style="margin-bottom:8px"><div class="note"><b>${esc(k)}</b> · ${by[k].length}</div><div class="row">${by[k].sort((a,b)=>team(a.id).name.localeCompare(team(b.id).name)).map(chip).join('')}</div></div>`).join('');
+  const n=parseInt($('#nc').value)||0;
+  $('#cnt').textContent=`${PICK.length} / ${n}`;$('#cnt').style.color=PICK.length===n?'var(--gold)':'';
+}
+function sugList(){
+  const q=$('#ps').value.trim().toLowerCase();
+  if(!q)return [];
+  const sc=t=>t.name.toLowerCase().startsWith(q)?0:t.name.toLowerCase().includes(q)?1:2;
+  return S.teams.filter(t=>!PICK.some(x=>x.id===t.id)&&(t.name.toLowerCase().includes(q)||(t.country||'').toLowerCase().includes(q)))
+    .sort((a,b)=>sc(a)-sc(b)||a.name.localeCompare(b.name)).slice(0,40);
+}
+function renderSug(){
+  const raw=$('#ps').value.trim(),q=raw.toLowerCase(),list=sugList();
+  if(!q){$('#sug').innerHTML='';return}
+  SUGI=Math.min(SUGI,Math.max(0,list.length-1));
+  const ct=list.filter(t=>(t.country||'').toLowerCase()===q);
+  $('#sug').innerHTML=(ct.length>1?`<button data-act="allc" data-c="${esc(ct[0].country)}">Add all ${ct.length} from ${esc(ct[0].country)}</button>`:'')+
+    list.map((t,i)=>`<button class="${i===SUGI?'act':''}" data-act="sug" data-id="${t.id}">${badge(t,'sm')}${esc(t.name)}<span class="note">${esc(t.country||'')}</span></button>`).join('')+
+    (S.teams.some(t=>t.name.toLowerCase()===q)?'':`<button data-act="newt" data-name="${esc(raw)}">+ Add “${esc(raw)}” as a new team</button>`);
+}
+function addPick(t,keep){ // keep = shift held: leave the search open to add more
+  if(!t||PICK.some(x=>x.id===t.id))return;
+  PICK.push({id:t.id,s:t.strength});if(!keep)$('#ps').value='';
+  renderPicked();renderSug();$('#ps').focus();
+}
+function newTeam(name){
+  const t={id:uid(),name,strength:6,logo:'',color:'',country:''};
+  S.teams.push(t);save();renderTeams();addPick(t);
+  findLogo(t).then(ok=>{if(ok){save();renderTeams();if(view==='new')renderPicked()}}).catch(()=>{});
+}
+function mkRound(c,ids){
+  let P=1;while(P<ids.length)P*=2;
+  const by=P-ids.length,ties=[],rest=ids.slice(by);
+  ids.slice(0,by).forEach(x=>ties.push({id:uid(),a:x,b:null,w:x,legs:[]}));
+  for(let i=0;i<rest.length;i+=2){
+    const T={id:uid(),a:rest[i],b:rest[i+1],w:null,legs:[]};
+    T.legs.push({id:uid(),h:T.a,a:T.b,r:null,t:T.id,leg:0});
+    if(c.agg!=='single'&&P>2)T.legs.push({id:uid(),h:T.b,a:T.a,r:null,t:T.id,leg:1});   // the final is always a single match
+    ties.push(T);
+  }
+  return {name:P===2?'Final':P===4?'Semi-finals':P===8?'Quarter-finals':'Round of '+P,ties};
+}
+function fixtures(ids,dbl){
+  const arr=shuffle(ids);if(arr.length%2)arr.push(null);
+  const n=arr.length,bal={},rounds=[];ids.forEach(i=>bal[i]=0);
+  for(let r=0;r<n-1;r++){
+    const ms=[];
+    for(let i=0;i<n/2;i++){
+      const x=arr[i],y=arr[n-1-i];if(!x||!y)continue;
+      const sw=bal[x]>bal[y]||(bal[x]===bal[y]&&r%2);   // give home to whoever has had fewer home games
+      const [h,a]=sw?[y,x]:[x,y];bal[h]++;bal[a]--;
+      ms.push({id:uid(),g:0,md:r+1,h,a,r:null});
+    }
+    rounds.push(ms);arr.splice(1,0,arr.pop());
+  }
+  const out=rounds.flat();
+  if(dbl)rounds.forEach((ms,r)=>ms.forEach(m=>out.push({id:uid(),g:0,md:r+n,h:m.a,a:m.h,r:null})));
+  return out;
+}
+function mkCup(){
+  const f=id=>$('#'+id).value,err=m=>{$('#nerr').textContent=m};
+  const n=parseInt(f('nc'))||0,type=f('nt');
+  if(type==='groups'){const G=n/4;if(n%4||G<2||(G&(G-1)))return err('Groups of 4 need 8, 16, 32, 64, 128, 256… teams (a power-of-2 number of groups, so the knockout has an even size).')}
+  else if(n<2)return err('Need at least 2 teams.');
+  if(PICK.length!==n)return err(`Pick exactly ${n} teams (you have ${PICK.length}).`);
+  const ids=PICK.map(x=>({id:x.id,s:x.s}));
+  const c={id:uid(),name:f('nn').trim()||(type==='league'?('League '+f('nse').trim()).trim():[f('nsr').trim(),f('ned').trim()].filter(Boolean).join(' '))||'Cup',photo:f('np').trim(),type,legs:f('ng'),agg:f('na'),teams:ids,groups:[],gm:[],ko:[],phase:type==='groups'?'groups':'ko'};
+  if(type==='league'){
+    const g=id=>Math.max(0,parseInt(f(id))||0);c.hb=g('nh');Object.assign(c,{ra:g('nra'),rb:g('nrb'),pa:g('npa'),pb:g('npb'),ua:g('nua'),ub:g('nub'),qa:g('nqa'),qb:g('nqb')});
+    if(c.ra+c.rb>=n)return err('Too many relegated teams.');
+    c.avg=[null,null];c.avgAuto=true;c.div=Math.max(1,parseInt(f('ndv'))||1);{const sl=f('nse').trim();c.season=sl?seasonId(sl):null;c.official=!!c.season&&$('#nof').checked;if(c.official)setOfficial(c)}if(CARRY)Object.assign(c,CARRY);c.phase='league';c.groups=[ids.map(x=>x.id)];c.gm=fixtures(c.groups[0],c.legs==='double');
+  }else if(type==='groups'){
+    const sh=drawGroups(ids.map(x=>x.id),4).flat(),P=[[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
+    for(let i=0;i<n;i+=4){
+      const g=sh.slice(i,i+4),gi=c.groups.length;c.groups.push(g);
+      P.forEach(([x,y])=>c.gm.push({id:uid(),g:gi,h:g[x],a:g[y],r:null}));
+      if(c.legs==='double')P.forEach(([x,y])=>c.gm.push({id:uid(),g:gi,h:g[y],a:g[x],r:null}));
+    }
+  }else{
+    let P=1;while(P<n)P*=2;
+    const srt=ids.slice().sort((x,y)=>y.s-x.s).map(x=>x.id),by=P-n; // strongest teams get the byes
+    c.ko.push(mkRound(c,[...srt.slice(0,by),...pairUp(srt.slice(by))]));
+  }
+  if(type!=='league'){c.series=f('nsr').trim();c.edition=f('ned').trim();if(c.series)S.sdef[c.series]={type,n,legs:c.legs,agg:c.agg,photo:c.photo}}S.comps.push(c);save();CARRY=null;if(QUEUE.length)nextForm();else show(c.id);
+}
+const byAvg=(a,b)=>b.avg-a.avg||b.pts-a.pts;
+function avgs(c){
+  const rows={},cur=Object.fromEntries(table(c,0).map(r=>[r.id,r]));
+  c.teams.forEach(x=>rows[x.id]={id:x.id,pts:0,p:0,src:[]});
+  const add=get=>c.teams.forEach(x=>{const v=get(x.id),r=rows[x.id];if(v){r.pts+=v.pts;r.p+=v.p;r.src.push(v.pts+'/'+v.p)}else r.src.push('–')});
+  const src=c.avgAuto===true?autoSrc(c):(c.avg||[null,null]);
+  [0,1].forEach(i=>{
+    const s=src[i],o=s&&s.t==='league'&&comp(s.id),tb=s&&s.t==='tbl'&&S.tables.find(x=>x.id===s.id);
+    if(o){const t=Object.fromEntries(table(o,0).map(r=>[r.id,r]));add(id=>t[id])}
+    else if(tb){const t=Object.fromEntries(tb.rows.map(r=>[r.t,r]));add(id=>t[id])}
+    else add(id=>s&&s.t==='manual'?s.rows[id]:null);
+  });
+  add(id=>cur[id]);
+  return Object.values(rows).map(r=>({...r,avg:r.p?r.pts/r.p:0}));
+}
+function relegated(c){ // first the last N in the table, then the worst averages among the rest
+  const set=new Set(),tb=table(c,0).map(r=>r.id);
+  tb.slice(Math.max(0,tb.length-(c.rb||0))).forEach(i=>set.add(i));
+  let k=c.ra||0;
+  for(const r of avgs(c).sort(byAvg).reverse()){if(k<=0)break;if(!set.has(r.id)){set.add(r.id);k--}}
+  return set;
+}
+function leagueHtml(c){
+  const z=zones(c),tb=table(c,0),av=avgs(c).sort(byAvg),others=S.comps.filter(o=>o.type==='league'&&o.id!==c.id),done=c.gm.every(m=>m.r)&&!(tiedTop(c).length>1&&!c.dmw);
+  const rem={};c.teams.forEach(x=>rem[x.id]=0);c.gm.forEach(m=>{if(!m.r){rem[m.h]++;rem[m.a]++}});
+  let cut=-1;tb.forEach((r,i)=>{if(r.pts+3*rem[r.id]>=tb[0].pts)cut=i});   // last team that can still reach the leader
+  if(cut===tb.length-1)cut=-1;
+  const slot=i=>{
+    const s=(c.avg||[])[i],L=i?'Last season':'Two seasons ago',v=!s?'none':s.t==='manual'?'manual':s.t==='tbl'?'tbl:'+s.id:'league:'+s.id;
+    return `<div><select data-act="avsrc" data-i="${i}"><option value="none">${L}: none</option>`+
+      others.map(o=>`<option value="league:${o.id}" ${v==='league:'+o.id?'selected':''}>${L}: ${esc(o.name)}</option>`).join('')+
+      S.tables.map(t=>`<option value="tbl:${t.id}" ${v==='tbl:'+t.id?'selected':''}>${L}: ${esc(tn(t))} (table)</option>`).join('')+`<option value="manual" ${v==='manual'?'selected':''}>${L}: enter manually</option></select>`+
+      (v==='manual'?`<textarea data-act="avtxt" data-i="${i}" rows="3" placeholder="Team, points, played (one per line)">${esc(s.txt||'')}</textarea>`:'')+`</div>`;
+  };
+  const mv=moveMap(c),mk=id=>mv[id]?(mv[id].up?`<span class="mv up" title="Promoted from division ${mv[id].d0>=3?'3 or lower':mv[id].d0}">▲</span>`:`<span class="mv dn" title="Relegated from division ${mv[id].d0}">▼</span>`):'';
+  let h='';
+  if(done&&tb.length){const t=tm(c,tb[0].id);h+=`<section class="wide"><div class="champ">🏆 ${badge(t,'sm')} ${esc(t.name)}</div></section>`}
+  h+=`<section class="wide"><div class="grid2"><div><h3>Table</h3><table class="tb"><tr><th>#</th><th></th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr>`+
+    tb.map((r,i)=>{const t=tm(c,r.id);return `<tr class="${(z.get(r.id)||'')+(i===0?' lead':'')+(i===cut?' cut':'')}"><td>${i+1}</td><td>${badge(t,'sm')}</td><td>${esc(t.name)}${mk(r.id)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${gd(r.gf-r.ga)}</td><td><b>${r.pts}</b></td></tr>`}).join('')+
+    `</table></div><div><h3>Averages</h3><div class="avcfg">${autoHtml(c,slot)}${rulesHtml(c)}</div>`+
+    `<table class="tb"><tr><th>Team</th><th>−2</th><th>−1</th><th>Now</th><th>Pts</th><th>P</th><th>Avg</th></tr>`+
+    av.map(r=>`<tr class="${z.get(r.id)||''}"><td>${esc(tm(c,r.id).name)}${mk(r.id)}</td><td>${r.src[0]}</td><td>${r.src[1]}</td><td>${r.src[2]}</td><td>${r.pts}</td><td>${r.p}</td><td><b>${r.p?r.avg.toFixed(3):'–'}</b></td></tr>`).join('')+
+    `</table><p class="note">Red = relegated, orange = relegation play-off, green = promoted, lime = promotion play-off. Position is applied first, then averages among the rest. The gold line marks the last team that can still catch the leader. Home teams get +${c.hb||0} chances in their own matches only.</p></div></div></section>`;
+  if(c.gm.length&&c.gm.every(m=>m.r))h+=chartHtml(c);
+  const mds=[...new Set(c.gm.map(m=>m.md))],first=mds.find(d=>c.gm.some(m=>m.md===d&&!m.r));
+  h+=`<section class="wide"><h2>Fixtures</h2>`+(c.gm.every(m=>m.r)?'':`<div class="row" style="margin-bottom:8px"><button data-act="simg">Sim all remaining matches</button></div>`)+
+    mds.map(d=>{const ms=c.gm.filter(m=>m.md===d),pend=ms.some(m=>!m.r);return `<details ${d===first?'open':''}><summary>Matchday ${d}${pend?'':' ✓'}</summary>${ms.map(m=>mrow(c,m)).join('')}${pend?`<button data-act="simmd" data-md="${d}">Sim this matchday</button>`:''}</details>`}).join('')+`</section>`;
+  return h+poHtml(c)+dmHtml(c)+ncountHtml(c,done)+seasonHtml(c,done);
+}
+function tableRaw(c,g){
+  const row={};c.groups[g].forEach(i=>row[i]={id:i,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0});
+  c.gm.filter(m=>m.g===g&&m.r).forEach(m=>{
+    const [x,y]=m.r.g,H=row[m.h],A=row[m.a];H.p++;A.p++;H.gf+=x;H.ga+=y;A.gf+=y;A.ga+=x;
+    if(x>y){H.w++;A.l++;H.pts+=3}else if(x<y){A.w++;H.l++;A.pts+=3}else{H.d++;A.d++;H.pts++;A.pts++}
+  });
+  return Object.values(row).sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga)||b.gf-a.gf||tm(c,a.id).name.localeCompare(tm(c,b.id).name));
+}
+function startKO(c){
+  const W=[],R=[];c.groups.forEach((g,i)=>{const t=table(c,i);W.push(t[0].id);R.push(t[1].id)});
+  const ids=[];for(let k=0;k<W.length;k+=2)ids.push(W[k],R[k+1],W[k+1],R[k]);
+  c.ko.push(mkRound(c,ids));c.phase='ko';
+}
+function nextRound(c){
+  const l=c.ko[c.ko.length-1];
+  if(l.ties.length>1&&l.ties.every(T=>T.w)){
+    c.ko.push(mkRound(c,l.ties.map(T=>T.w)));
+    if(l.ties.length===2&&l.ties.every(T=>T.b)){   // semi-finals done: the losers play for third place (single match)
+      const [a,b]=l.ties.map(T=>T.w===T.a?T.b:T.a),T={id:uid(),a,b,w:null,legs:[]};
+      T.legs.push({id:uid(),h:a,a:b,r:null,t:T.id,leg:0});c.third=T;
+    }
+  }
+}
+function ctxFor(c,m){
+  let mode=m.po?'etpen':false,carry=[0,0],two=false;
+  if(m.t){const T=findTie(c,m.t);
+    if(T.legs.length===1)mode='etpen';
+    else if(m.leg===1){mode=c.agg==='twoPens'?'pen':'etpen';two=true;const l=T.legs[0].r.g;carry=[l[1],l[0]]}}
+  return {mode,carry,two};
+}
+function record(c,m,t){
+  m.r={g:t.play,p:t.hasPen?t.pen:null};
+  if(m.dm){advanceDM(c);return}
+  if(!m.t)return;
+  const T=findTie(c,m.t);if(T.legs.some(l=>!l.r))return;
+  const s={[T.a]:0,[T.b]:0};T.legs.forEach(l=>{s[l.h]+=l.r.g[0];s[l.a]+=l.r.g[1]});
+  if(s[T.a]!==s[T.b])T.w=s[T.a]>s[T.b]?T.a:T.b;
+  else{const l=T.legs[T.legs.length-1];T.w=l.r.p?(l.r.p[0]>l.r.p[1]?l.h:l.a):T.a}
+}
+function simM(c,m){const x=ctxFor(c,m);record(c,m,tally(simulate(...sides(c,m),x.mode,x.carry)))}
+
+function openMatch(c,m){
+  const g=c.type==='league'?0:m.g,tb=(g!==undefined&&!m.po&&!m.dm&&(c.type==='league'||c.groups[g]))?table(c,g):null;   // standing before this match
+  const info=tb?[m.h,m.a].map(id=>{const i=tb.findIndex(r=>r.id===id);return i<0?'':`#${i+1}, ${tb[i].pts} pts`}):null;
+  CTX={c:c.id,m:m.id,A:sides(c,m)[0],B:sides(c,m)[1],...ctxFor(c,m),info};
+  $('#dlg').appendChild($('#mp'));$('#mp').classList.add('fx');
+  $('#play').hidden=false;$('#sv').hidden=true;$('#cl').hidden=false;
+  $('#log').innerHTML='';$('#score').textContent='–';$('#sub').textContent='';$('#win').textContent='';
+  KITSEL={};renderSides();$('#dlg').showModal();
+}
+$('#dlg').onclose=()=>{
+  token++;$('#v-quick').prepend($('#mp'));$('#mp').classList.remove('fx');CTX=null;
+  $('#play').hidden=false;$('#sv').hidden=true;$('#cl').hidden=true;
+  $('#log').innerHTML='';$('#score').textContent='–';$('#sub').textContent='';$('#win').textContent='';
+  renderSides();if(comp(view))renderCup();else if(view==='home')renderHome();
+};
+$('#cl').onclick=()=>$('#dlg').close();
+$('#sv').onclick=()=>{const c=comp(CTX.c);record(c,findM(c,CTX.m),tally(LAST));save();$('#dlg').close()};
+
+function mrow(c,m,lock,w){
+  const H=tm(c,m.h),A=tm(c,m.a),ki=m.t&&KOI?kinfo:()=>'';
+  const mid=m.r?`<b class="res">${m.r.g[0]} – ${m.r.g[1]}${m.r.p?` <small>(${m.r.p[0]}–${m.r.p[1]} p)</small>`:''}</b>`
+    :lock?'<span class="note">play leg 1 first</span>'
+    :`<span class="row" style="justify-content:center"><button data-act="play" data-m="${m.id}" data-c="${c.id}">Play</button><button data-act="sim" data-m="${m.id}" data-c="${c.id}">Sim</button></span>`;
+  return `<div class="mrow"><span class="h${w&&w===m.h?' adv':''}"><span class="tcol">${esc(H.name)}${ki(m.h)}</span>${badge(H,'sm')}</span><span class="mid">${mid}</span><span class="aw${w&&w===m.a?' adv':''}">${badge(A,'sm')}<span class="tcol">${esc(A.name)}${ki(m.a)}</span></span></div>`;
+}
+function tieHtml(c,T,third){
+  if(!T.b){const t=tm(c,T.a);return `<div class="mrow"><span class="h adv">${esc(t.name)}${badge(t,'sm')}</span><span class="mid note">bye</span><span></span></div>`}
+  let h='<div class="tie">'+T.legs.map((m,i)=>mrow(c,m,i===1&&!T.legs[0].r,T.w)).join('');
+  if(T.w){
+    let ag='';
+    if(T.legs.length>1){const s={[T.a]:0,[T.b]:0};T.legs.forEach(l=>{s[l.h]+=l.r.g[0];s[l.a]+=l.r.g[1]});ag=`Aggregate ${s[T.legs[1].h]}–${s[T.legs[1].a]}`}
+    if(ag)h+=`<div class="agg">${ag}</div>`;
+  }
+  return h+'</div>';
+}
+function renderCup(){
+  const c=comp(view);if(!c){show('home');return}
+  if(c.type==='league')ensureDM(c);
+  KOI=(c.type!=='league'&&c.ko.length)?rankMap():null;
+  const last=c.ko[c.ko.length-1],champ=last&&last.ties.length===1&&last.ties[0].w;
+  let h=`<section class="wide"><div class="row" style="justify-content:space-between"><div class="row">${c.photo?`<img class="cupimg" src="${esc(c.photo)}" alt="" onerror="this.remove()">`:''}<h2 style="margin:0">${esc(c.name)}</h2></div><span class="row"><button data-act="ren">Rename</button><button class="link" data-act="del">Delete</button></span></div>`;
+  if(champ){const t=tm(c,champ);h+=`<div class="champ">🏆 ${badge(t,'sm')} ${esc(t.name)}</div>`}
+  if(c.type!=='league')h+=`<div class="row note" style="margin-top:8px">Series <input list="dl-series" data-act="cser" value="${esc(c.series||'')}" placeholder="Copa Libertadores"> Edition <input data-act="ced" value="${esc(c.edition||'')}" placeholder="2020" style="width:90px"></div>${dls()}`;
+  if(c.type!=='league')h+=countHtml(c);
+  const out=elimSet(c),tlist=[...c.teams.filter(x=>!out.has(x.id)),...c.teams.filter(x=>out.has(x.id))];
+  h+=`<details ${teamsOpen?'open':''} style="margin-top:12px"><summary data-teams>Teams and strength (this competition only)${out.size?` · ${c.teams.length-out.size} still in`:''}</summary><div class="tgrid">`+
+    tlist.map(x=>{const t=tm(c,x.id);return `<div class="trow${out.has(x.id)?' out':''}" data-id="${t.id}">${badge(t,'sm')}<span>${esc(t.name)}</span><button data-act="dec">−1</button><input type="number" min="0" value="${x.s}" data-act="st"><button data-act="inc">+1</button></div>`}).join('')+`</div></details></section>`;
+  if(c.type==='league')h+=leagueHtml(c);
+  else if(c.groups.length){
+    h+=`<section class="wide"><h2>Group stage</h2><div class="grid2">`+c.groups.map((g,gi)=>`<div><h3>Group ${String.fromCharCode(65+gi)}</h3><table class="tb"><tr><th></th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr>`+
+      table(c,gi).map((r,i)=>{const t=tm(c,r.id);return `<tr class="${i<2?'q':''}"><td>${badge(t,'sm')}</td><td>${esc(t.name)}</td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${gd(r.gf-r.ga)}</td><td><b>${r.pts}</b></td></tr>`}).join('')+
+      `</table>`+c.gm.filter(m=>m.g===gi).map(m=>mrow(c,m)).join('')+`</div>`).join('')+`</div>`;
+    if(c.phase==='groups')h+=`<div class="row" style="margin-top:12px"><button data-act="simg">Sim remaining group matches</button><button class="main" data-act="startko" ${c.gm.every(m=>m.r)?'':'disabled'}>Start knockout</button></div>`;
+    h+='</section>';
+  }
+  if(c.ko.length){
+    const fxa=factsHtml(c)+champsHtml(c),fx=fxa?`<div class="sidecol">${fxa}</div>`:'';
+    h+=`<section class="wide"><h2>Knockout</h2><div class="${fx?'kogrid':''}"><div>`+c.ko.map(r=>`<h3>${r.name}</h3>`+r.ties.map(T=>tieHtml(c,T)).join('')).join('')+(c.third?`<h3>Third place</h3>`+tieHtml(c,c.third,1):'');
+    if(!champ||(c.third&&!c.third.w))h+=`<div class="row" style="margin-top:12px"><button data-act="simk">Sim remaining matches in this round</button><button class="main" data-act="nextr" ${last.ties.every(T=>T.w)?'':'disabled'}>Next round</button></div>`;
+    h+=`</div>${fx}</div></section>`;
+  }
+  $('#v-cup').innerHTML=h;
+}
+$('#v-cup').addEventListener('click',e=>{
+  if(e.target.closest('summary[data-teams]')){teamsOpen=!teamsOpen;return}
+  if(e.target.closest('summary[data-seas]')){seasOpen=!seasOpen;return}
+  if(e.target.closest('summary[data-cups]')){cupsOpen=!cupsOpen;return}
+  if(e.target.closest('summary[data-grp]')){grpOpen=!grpOpen;return}
+  if(e.target.closest('summary[data-nr]')){NROPEN=!NROPEN;return}
+  const b=e.target.closest('[data-act]');if(!b||['INPUT','SELECT','TEXTAREA'].includes(b.tagName))return;
+  const a=b.dataset.act,c=comp(b.dataset.c||view);
+  if(a==='sug'){addPick(team(b.dataset.id),e.shiftKey);return}
+  if(a==='allc'){S.teams.filter(t=>(t.country||'')===b.dataset.c).forEach(t=>addPick(t,true));$('#ps').value='';renderSug();return}
+  if(a==='newt'){newTeam(b.dataset.name);return}
+  if(a==='unpick'){PICK=PICK.filter(x=>x.id!==b.closest('.pchip').dataset.id);renderPicked();return}
+  if(a==='mk')return mkCup();
+  if(a==='d1sel'||a==='cupsel'){   // no redraw, so the table keeps its scroll position
+    const d1=a==='d1sel',id=b.dataset.id,nx=(d1?D1SEL:CUPSEL)===id?null:id;if(d1)D1SEL=nx;else CUPSEL=nx;
+    b.parentElement.querySelectorAll('tr.sel').forEach(r=>r.classList.remove('sel'));if(nx)b.classList.add('sel');return}
+  if(a==='plh'){PLH=PLH===b.dataset.id?null:b.dataset.id;refresh();return}
+  if(a==='stcol'||a==='d1col'){   // highlight a season column like a selected row (no redraw)
+    const set=a==='stcol'?STCOLS:D1COLS,id=b.dataset.id,on=!set.has(id);if(on)set.add(id);else set.delete(id);
+    const ix=b.cellIndex;[...b.closest('table').rows].forEach(r=>{if(r.cells[ix])r.cells[ix].classList.toggle('selc',on)});return}
+  if(a==='champmore'){CLMORE=!CLMORE;refresh();return}
+  if(a==='gotab'){show(b.dataset.v);return}
+  if(a==='expnow'){$('#exp').click();return}
+  if(a==='kitreset'){const t=team(TP);if(t&&t.kits&&t.kits[b.dataset.side]){pushUndo(t,b.dataset.side);delete t.kits[b.dataset.side];save();renderTeamPage()}return}
+  if(a==='kitundo'){kitUndo(b.dataset.side);return}
+  if(a==='kitsw'){kitEdit(b.dataset.side,b.dataset.f,b.dataset.c,b.dataset.l!==undefined?+b.dataset.l:undefined);renderTeamPage();return}
+  if(a==='kitadd'){kitEdit(b.dataset.side,'add');return}
+  if(a==='kitrm'){kitEdit(b.dataset.side,'rm',null,+b.dataset.l);return}
+  if(a==='tpgo'){TP=b.dataset.id;renderTeamPage();return}
+  if(a==='chcup'){CHF=b.dataset.s||'';CHT=null;CHY='';renderChamps();return}
+  if(a==='chgo'){CHF='';CHY='';CHT=b.dataset.id;renderChamps();return}
+  if(a==='chteam'){CHF='';CHY='';CHT=CHT===b.dataset.id?null:b.dataset.id;renderChamps();return}
+  if(a==='aliasall'){Object.entries(aliasGroups()).forEach(([base,l])=>l.forEach(r=>{S.alias[r]=base}));save();renderChamps();return}
+  if(a==='stteam'){statsSel=b.dataset.id;renderStats();return}
+  if(a==='tedit'){const t=S.tables.find(x=>x.id===b.dataset.id);if(!t)return;
+    $('#tse').value=t.s;$('#tdv').value=t.d;$('#tsort').checked=false;
+    $('#ttxt').value=t.rows.map(r=>[(team(r.t)||{}).name,r.pts,r.p,...(r.gf!==undefined?[r.gf,r.ga]:[])].join(', ')).join('\n');
+    $('#ttxt').scrollIntoView({behavior:'smooth',block:'center'});msg('Loaded "'+tn(t)+'" into the form above. Edit it and press Save table to replace it.');return}
+  if(a==='tadd'){const nm=$('#tq').value.trim(),pt=$('#tp').value,pl=$('#tg').value;if(!nm||pt===''||pl==='')return;
+    const t=$('#ttxt');t.value+=(t.value&&!t.value.endsWith('\n')?'\n':'')+`${nm}, ${pt}, ${pl}`;$('#tq').value='';$('#tp').value='';LASTP=pl;$('#tq').focus();return}
+  if(a==='tdel'){if(confirm('Delete this table?')){S.tables=S.tables.filter(x=>x.id!==b.dataset.id);save();renderTables()}return}
+  if(a==='tsave'){
+    const sid=$('#tse').value,d=Math.max(1,parseInt($('#tdv').value)||1),co=$('#tco').value.trim(),rows=[];
+    if(!sid){msg('Create a season first (First division tab, Seasons).');return}
+    $('#ttxt').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).forEach(l=>{
+      const dl=l.includes('\t')?'\t':l.includes(';')?';':',',[nm,pt,pl,gf,ga]=l.split(dl).map(x=>x.replace(/^"|"$/g,'').trim());
+      if(!nm||isNaN(parseFloat(pt))||isNaN(parseInt(pl)))return;   // skips headers and bad lines
+      let t=S.teams.find(x=>x.name.toLowerCase()===nm.toLowerCase());
+      if(!t){t={id:uid(),name:nm,strength:6,logo:'',color:'',country:co};S.teams.push(t)}
+      rows.push({t:t.id,pts:Math.round(parseFloat(pt)),p:parseInt(pl),...(gf!==undefined&&ga!==undefined&&gf!==''&&ga!==''&&!isNaN(+gf)&&!isNaN(+ga)?{gf:+gf,ga:+ga}:{})});
+    });
+    if(!rows.length){msg('No valid lines. Use: team, points, played.');return}
+    if($('#tsort').checked)rows.sort((a,b)=>b.pts-a.pts||((b.gf||0)-(b.ga||0))-((a.gf||0)-(a.ga||0)));
+    const sl=S.seasons.find(x=>x.id===sid),old=S.tables.findIndex(x=>x.s===sid&&x.d===d),rec={id:old>=0?S.tables[old].id:uid(),s:sid,d,n:`${sl.label} · D${d}`,rows};
+    if(old>=0)S.tables[old]=rec;else S.tables.push(rec);
+    save();renderTeams();renderTables();msg('Table saved ('+rows.length+' teams).');return}
+  if(a==='dvchk'){DIVI=parseDiv($('#dvtxt').value);$('#dvprev').innerHTML=DIVI?divPreview(DIVI):'<span style="color:var(--bad)">'+($('#dvtxt').value.trim()?'Could not read that table.':'Choose a file or paste the table first.')+'</span>';return}
+  if(a==='dvgo'&&DIVI){commitDiv(DIVI);DIVI=null;save();renderTeams();show('stats');msg('Divisions imported.');return}
+  if(a==='radd'){S.rules.push({id:uid(),k:$('#rnew').value,v:0,n:4,series:'',tiers:'5:5,7:7,8:10,9:12,10:15',extra:2});save();renderRules();return}
+  if(a==='rdel'){S.rules=S.rules.filter(x=>x.id!==b.closest('[data-id]').dataset.id);save();renderRules();return}
+  if(a==='bimp'){
+    const keys=BASEFMT[$('#bkind').value];let n=0;
+    $('#btxt').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).forEach(l=>{
+      const d=l.includes('\t')?'\t':l.includes(';')?';':',',c=l.split(d).map(x=>x.replace(/^"|"$/g,'').trim());
+      if(!c[0]||isNaN(parseFloat(c[1])))return;   // skips the header line
+      const t=teamByName(c[0]),b=S.base[t.id]=S.base[t.id]||{pt:0,n:0,1:0,2:0,3:0,4:0,QF:0};
+      keys.forEach((k,i)=>{b[k]=parseFloat(c[i+1])||0});n++;   // only this table's columns change
+    });
+    save();renderTeams();renderRules();msg(n+' teams updated in the base totals.');return}
+  if(a==='bclr'){if(confirm('Remove ALL base totals? You can import them again later.')){S.base={};save();renderRules()}return}
+  if(a==='lastteams'){const sr=$('#nsr').value.trim(),lc=[...S.comps].reverse().find(x=>x.type!=='league'&&x.series===sr);
+    if(!lc){msg('Write the cup series first, and it needs a previous edition.');return}
+    PICK=lc.teams.map(x=>({id:x.id,s:x.s}));renderPicked();msg('Teams of "'+lc.name+'" loaded.');return}
+  if(a==='nteam'){NSEL=b.dataset.id;renderNat();return}
+  if(a==='nsort'){const k=b.dataset.k;NS=NS.k===k?{k,d:-NS.d}:{k,d:k==='name'?1:-1};renderNat();return}
+  if(a==='nbimp'){let n=0;
+    $('#ntxt').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).forEach(l=>{
+      const d=l.includes('\t')?'\t':l.includes(';')?';':',',c=l.split(d).map(x=>x.replace(/^"|"$/g,'').trim());
+      if(!c[0]||isNaN(parseFloat(c[1])))return;   // skips the header line
+      S.nbase[teamByName(c[0],'Argentina').id]=parseFloat(c[1]);n++;
+    });
+    save();renderTeams();renderNat();msg(n+' teams in the national base totals.');return}
+  if(a==='nbclr'){if(confirm('Remove ALL national base totals? You can import them again later.')){S.nbase={};save();renderNat()}return}
+  if(a==='csort'){const k=b.dataset.k;CS=CS.k===k?{k,d:-CS.d}:{k,d:k==='name'?1:-1};renderCups();return}
+  if(a==='d1chk'){IMP=parsePos($('#d1txt').value);$('#d1prev').innerHTML=IMP?previewHtml(IMP):'<span style="color:var(--bad)">'+($('#d1txt').value.trim()?'Could not read that table.':'Choose a file or paste the table first.')+'</span>';return}
+  if(a==='d1go'&&IMP){commitPos(IMP);IMP=null;save();renderTeams();show('d1');msg('First division positions imported.');return}
+  if(a==='cimp'){
+    const bid=uid(),fmt=$('#cfmt').value;let add=0,swapped=0;
+    const put=(sr,ed,t,p)=>{   // a corrected line replaces the same placement of the same edition, so nothing is counted twice
+      const same=x=>x.series===sr&&x.ed===ed;
+      if([1,2,3,4].includes(p)){const old=S.cres.filter(x=>same(x)&&x.p===p);swapped+=old.length;S.cres=S.cres.filter(x=>!old.includes(x))}
+      else if(S.cres.some(x=>same(x)&&x.p===p&&x.t===t))return;
+      S.cres.push({series:sr,ed,t,p,b:bid});add++;
+    };
+    $('#ctxt').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).forEach(l=>{
+      const d=l.includes('\t')?'\t':l.includes(';')?';':',',c=l.split(d).map(x=>x.replace(/^"|"$/g,'').trim());
+      if(!c[0]||/^(series|cup)/i.test(c[0])&&isNaN(parseInt(c[1])))return;
+      if(fmt==='ed'){const [sr,ed,...pl]=c;pl.slice(0,4).forEach((nm,i)=>{if(nm)put(sr,ed||'',teamByName(nm).id,i+1)});return}
+      const [sr,ed,nm,pl,co]=c;if(!nm)return;
+      put(sr,ed||'',teamByName(nm,co).id,/^[1-4]$/.test(pl)?+pl:/^qf$/i.test(pl)?'QF':'P');
+    });
+    save();renderTeams();show(view);msg(add+' records added'+(swapped?', '+swapped+' replaced by the new lines':'')+'.');return;
+  }
+  if(a==='cundo'){const x=[...S.cres].reverse().find(y=>y.b&&y.b!=='hand');if(x){S.cres=S.cres.filter(y=>y.b!==x.b);save();show(view)}return}
+  if(a==='sup'||a==='sdn'){const i=S.seasons.findIndex(x=>x.id===b.dataset.id),j=i+(a==='sup'?-1:1);if(j>=0&&j<S.seasons.length){[S.seasons[i],S.seasons[j]]=[S.seasons[j],S.seasons[i]];save();show(view)}return}
+  if(a==='sren'){const x=S.seasons.find(y=>y.id===b.dataset.id);
+    const sc=prompt('Short name, shown in the tables (for example 2024)',x.code||x.label);if(sc===null)return;
+    const fl=prompt('Full name, shown when hovering (for example Temporada 2024)',x.label);if(fl===null)return;
+    if(sc.trim())x.code=sc.trim();if(fl.trim())x.label=fl.trim();save();show(view);return}
+  if(a==='sdel'){
+    const id=b.dataset.id,x=S.seasons.find(y=>y.id===id),lg=S.comps.filter(c=>c.season===id),tb=S.tables.filter(t=>t.s===id),hs=S.hist.filter(y=>y.s===id);
+    const lines=[...lg.map(c=>'League (kept, only unlinked): '+c.name),...tb.map(t=>'Final table (deleted): '+tn(t)),...hs.map(h=>'Archived table (deleted): '+h.n),...(S.d1[id]?['First-division positions (deleted)']:[]),...(S.div[id]?['Divisions list (deleted)']:[])];
+    if(lines.length&&!confirm(`Delete season "${x.label}"?\n\n${lines.join('\n')}\n\nLeagues are never deleted: they keep every match and result. They only stop being linked to this season, so they stop counting in the Divisions and First division tabs until you pick a season for them again in the league itself.`))return;
+    S.tables=S.tables.filter(t=>t.s!==id);delete S.div[id];
+    S.seasons=S.seasons.filter(y=>y.id!==id);delete S.d1[id];S.hist=S.hist.filter(y=>y.s!==id);S.d1cols=S.d1cols.filter(y=>y!==id);
+    S.comps.forEach(c=>{if(c.season===id){c.season=null;c.official=false}});save();show(view);return}
+  if(a==='addt'){const t=$('#ctm').value,sr=$('#csr').value.trim();if(!t||!sr){msg('Pick a team and write the cup name.');return}S.cres.push({series:sr,ed:$('#ced').value.trim(),t,p:1,b:'hand'});save();renderChamps();return}
+  if(a==='delt'){S.cres.splice(+b.dataset.i,1);save();renderChamps();return}
+  if(!c)return;
+  if(a==='ren'){const n=prompt('Name',c.name);if(n&&n.trim()){c.name=n.trim();save();renderTabs();renderCup()}return}
+  if(a==='simmd')c.gm.filter(m=>m.md===+b.dataset.md&&!m.r).forEach(m=>simM(c,m));
+  if(a==='ncnt'){const tb=table(c,0);
+    if(!confirm(`Count "${c.name}" in the national points table?\n\nEvery team gets its league points, plus the champion and podium bonuses.`))return;
+    c.ncounted={at:new Date().toISOString().slice(0,10),recs:tb.map((r,i)=>({t:r.id,p:i<4?i+1:'P',pts:r.pts,...(i===0?{gap:r.pts-(tb[1]?tb[1].pts:0)}:{})})),stats:cupStats(c)};save();renderCup();return}
+  if(a==='nuncnt'){if(confirm('Remove this league from the national points table?')){delete c.ncounted;save();renderCup()}return}
+  if(a==='cnt'){
+    const r=recsOf(c);if(!r)return;const dup=S.cres.some(x=>x.series===c.series&&x.ed===(c.edition||''));
+    if(!confirm(`Count "${c.name}" (${c.series} ${c.edition||''}) in the ${isCopaArg(c.series)?'national points table':'international cups table (and the national table for Argentine teams)'}?\n\nIt adds participations and placements for ${r.length} teams.`+(dup?'\n\nImported results for this same edition will be replaced by this cup.':'')))return;
+    c.counted={at:new Date().toISOString().slice(0,10),recs:r,stats:cupStats(c)};save();renderCup();return}
+  if(a==='uncnt'){if(confirm('Remove this cup from the cups table?')){delete c.counted;save();renderCup()}return}
+  if(a==='mkpo')mkPO(c);
+  if(a==='apply'){applySeason(c);return}
+  if(a==='del'){if(confirm('Delete this tab?')){if(c.type==='league'&&c.official&&c.season&&c.gm.some(m=>m.r))S.hist.push({s:c.season,d:c.div||1,n:c.name,o:table(c,0).map(r=>r.id)});S.comps=S.comps.filter(x=>x!==c);save();show('home')}return}
+  if(a==='inc'||a==='dec'){
+    const x=c.teams.find(t=>t.id===b.closest('.trow').dataset.id);
+    x.s=Math.max(0,x.s+(a==='inc'?1:-1));b.parentNode.querySelector('input').value=x.s;save();return;
+  }
+  if(b.dataset.m){const m=findM(c,b.dataset.m);if(a==='play'){openMatch(c,m);return}simM(c,m)}
+  if(a==='simg')c.gm.filter(m=>!m.r).forEach(m=>simM(c,m));
+  if(a==='simk')[...c.ko[c.ko.length-1].ties,...(c.third?[c.third]:[])].forEach(T=>T.legs.forEach(m=>{if(!m.r)simM(c,m)}));
+  if(a==='startko')startKO(c);
+  if(a==='nextr')nextRound(c);
+  save();refresh();
+});
+$('#v-cup').addEventListener('input',e=>{const id=e.target.id;if(id==='ps'){SUGI=0;renderSug()}if(id==='nc')renderPicked();if(id==='ndv')syncForm();{const kd=e.target.dataset;if(kd.kit&&kd.f)kitEdit(kd.kit,kd.f,e.target.type==='checkbox'?e.target.checked:e.target.value,kd.l!==undefined?+kd.l:undefined)}if(id==='chsearch'){CHQ=e.target.value.trim().toLowerCase();applyCHQ()}});
+$('#v-cup').addEventListener('keydown',e=>{
+  if(e.target.id!=='ps')return;
+  const n=sugList().length;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();if(n){SUGI=(SUGI+(e.key==='ArrowDown'?1:n-1))%n;renderSug();const a=document.querySelector('#sug .act');if(a)a.scrollIntoView({block:'nearest'})}
+  }else if(e.key==='Enter'){
+    e.preventDefault();const t=sugList()[SUGI];
+    if(t)addPick(t,e.shiftKey);else{const b=document.querySelector('#sug [data-act=newt]');if(b)b.click()}
+  }else if(e.key==='Escape'){$('#sug').innerHTML=''}
+});
+$('#v-cup').addEventListener('change',e=>setTimeout(()=>onChange(e),0)); // deferred: re-rendering inside a blur-triggered event can fail
+function onChange(e){
+  const el=e.target,a=el.dataset.act,i=+el.dataset.i;
+  if(el.id==='nsr'){applyDefaults(el.value.trim());return}
+  if(el.id==='ned'&&$('#nn')&&$('#nn').dataset.auto){$('#nn').value=$('#nsr').value.trim()+(el.value.trim()?' '+el.value.trim():'');return}
+  if(el.id==='nt'){if(el.value==='league')$('#ng').value='double';syncForm();return}
+  if(a==='pst'){const x=PICK.find(p=>p.id===el.closest('.pchip').dataset.id);x.s=Math.max(0,parseInt(el.value)||0);return}
+  if(el.id==='stsel'){statsSel=el.value;renderStats();return}
+  if(a==='stctry'){S.sc=el.value.trim();save();renderStats();return}
+  if(a==='sadd'){const v=el.value.trim();if(v){const n=S.seasons.length,id=seasonId(v),after=$('#sapos')?$('#sapos').value:'';
+    if(after&&S.seasons.length>n){const x=S.seasons.pop();S.seasons.splice(S.seasons.findIndex(y=>y.id===after)+1,0,x)}save();show(view)}return}
+  if(a==='alias'){const r=el.dataset.s,v=el.value.trim();if(v&&v!==r)S.alias[r]=v;else delete S.alias[r];save();renderChamps();return}
+  if(el.id==='nfile'){el.files[0].text().then(t=>{$('#ntxt').value=t});return}
+  if(a==='chyear'){CHY=el.value;CHF='';CHT=null;renderChamps();return}
+  if(el.id==='tpsel'){const t=S.teams.find(x=>x.name.toLowerCase()===el.value.trim().toLowerCase());if(t){TP=t.id;renderTeamPage()}return}
+  if(el.id==='rcsel'){RCS=el.value;renderRecords();return}
+  if(el.id==='nsel'){NSEL=el.value;renderNat();return}
+  if(el.id==='cfmt'){CFMT=el.value;return}
+  if(a==='natcup'){S.natCup=el.value.trim()||'Copa Argentina';save();renderNat();return}
+  if(el.id==='dvfile'){el.files[0].text().then(t=>{$('#dvtxt').value=t});return}
+  if(el.id==='bfile'){el.files[0].text().then(t=>{$('#btxt').value=t});return}
+  if(a==='rv'||a==='rn'||a==='rs'||a==='rt'||a==='rx'){const r=allRules().find(x=>x.id===el.closest('[data-id]').dataset.id);if(r){if(a==='rv')r.v=parseFloat(el.value)||0;if(a==='rn')r.n=Math.max(1,parseInt(el.value)||4);if(a==='rs')r.series=el.value;if(a==='rt')r.tiers=el.value.trim();if(a==='rx')r.extra=parseFloat(el.value)||0}save();return}
+  if(el.id==='tfile'){el.files[0].text().then(t=>{$('#ttxt').value=t});return}
+  if(el.id==='d1file'){el.files[0].text().then(t=>{$('#d1txt').value=t});return}
+  if(el.id==='cfilter'){CF=el.value;renderCups();return}
+  if(a==='natsr'){const x=el.dataset.s;S.nat=el.checked?S.nat.filter(y=>y!==x):[...S.nat,x];save();renderCups();return}
+  if(a==='ptsc'){S.pts[el.dataset.k]=parseFloat(el.value)||0;save();renderCups();return}
+  const c=comp(view);if(!c)return;
+  if(a==='avauto'){c.avgAuto=el.checked;save();renderCup();return}
+  if(a==='lseason'){c.season=el.value.trim()?seasonId(el.value):null;if(!c.season)c.official=false;if(c.official)setOfficial(c);save();renderCup();return}
+  if(a==='lofficial'){if(el.checked&&!c.season)msg('Set a season first.');c.official=el.checked&&!!c.season;if(c.official)setOfficial(c);save();renderCup();return}
+  if(a==='cser'||a==='ced'){c[a==='cser'?'series':'edition']=el.value.trim();save();return}
+  if(a==='st'){const x=c.teams.find(t=>t.id===el.closest('.trow').dataset.id);x.s=Math.max(0,parseInt(el.value)||0);save();return}
+  if(a==='rule'){const k=el.dataset.k;c[k]=Math.max(k==='div'?1:0,parseInt(el.value)||0);save();renderCup();return}
+  if(a==='below'){
+    const old=c.below&&comp(c.below);c.below=el.value||null;c.po=null;c.xs=null;
+    if(old&&old.id!==c.below&&old.color===c.color){delete old.color;delete c.color}   // unlinking clears the shared colour
+    const L=c.below&&comp(c.below);if(L){c.color=L.color=c.color||L.color||randColor()}save();renderTabs();renderCup();return}
+  if(a==='avsrc'){
+    c.avg=c.avg||[null,null];const v=el.value;
+    c.avg[i]=v==='none'?null:v==='manual'?{t:'manual',txt:'',rows:{}}:v.startsWith('tbl:')?{t:'tbl',id:v.slice(4)}:{t:'league',id:v.slice(7)};
+    save();renderCup();return;
+  }
+  if(a==='avtxt'){
+    const rows={};let bad=0;
+    el.value.split('\n').forEach(l=>{
+      if(!l.trim())return;
+      const [nm,pt,pl]=l.split(',').map(x=>x.trim()),x=c.teams.find(y=>team(y.id).name.toLowerCase()===(nm||'').toLowerCase());
+      if(x&&pt!==undefined&&pl!==undefined&&!isNaN(+pt)&&!isNaN(+pl))rows[x.id]={pts:+pt,p:+pl};else bad++;
+    });
+    c.avg=c.avg||[null,null];c.avg[i]={t:'manual',txt:el.value,rows};save();renderCup();
+    if(bad)msg(bad+' line(s) did not match a team in this league.');
+  }
+}
+$('#teams').addEventListener('toggle',e=>{if(LQ)return;const d=e.target;if(d.dataset&&d.dataset.c!==undefined)d.open?openC.add(d.dataset.c):openC.delete(d.dataset.c)},true);
+
+/* ---------- zones, season end, history ---------- */
+function zones(c){ // who is relegated / in play-offs / promoted; position first, then averages among the rest
+  const z=new Map(),tb=table(c,0).map(r=>r.id),av=avgs(c).sort(byAvg).map(r=>r.id);
+  const take=(cls,na,np,top)=>{
+    let k=np;for(const id of top?tb:tb.slice().reverse()){if(k<=0)break;if(!z.has(id)){z.set(id,cls);k--}}
+    k=na;for(const id of top?av:av.slice().reverse()){if(k<=0)break;if(!z.has(id)){z.set(id,cls);k--}}
+  };
+  take('rel',c.ra||0,c.rb||0,false);
+  if((c.div||1)>1)take('up',c.ua||0,c.ub||0,true);
+  take('pd',c.pa||0,c.pb||0,false);
+  if((c.div||1)>1)take('pu',c.qa||0,c.qb||0,true);
+  return z;
+}
+function rulesHtml(c){
+  const row=(l,a,b)=>`<tr><td>${l}</td><td><input type="number" min="0" data-act="rule" data-k="${a}" value="${c[a]||0}"></td><td><input type="number" min="0" data-act="rule" data-k="${b}" value="${c[b]||0}"></td></tr>`;
+  const up=(c.div||1)>1;
+  return `<div class="row"><label class="note">Season <input list="dl-seasons" data-act="lseason" value="${esc(slabel(c.season))}" placeholder="2020" style="width:140px"></label><label class="note"><input type="checkbox" data-act="lofficial" ${c.official?'checked':''} style="width:auto"> Official (counts in Stats)</label></div>${dls()}<label class="note">Division <input type="number" min="1" data-act="rule" data-k="div" value="${c.div||1}"></label><table class="tb rules"><tr><th></th><th>By averages</th><th>By position</th></tr>${row('Relegated','ra','rb')}${row('Relegation play-off','pa','pb')}${up?row('Promoted','ua','ub')+row('Promotion play-off','qa','qb'):''}</table>`;
+}
+const poWin=m=>m.r.g[0]!==m.r.g[1]?(m.r.g[0]>m.r.g[1]?m.h:m.a):(m.r.p[0]>m.r.p[1]?m.h:m.a);
+function mkPO(c){ // 3rd-last vs 3rd, 4th-last vs 4th, ... single matches
+  const L=comp(c.below);if(!L)return;
+  const zU=zones(c),zL=zones(L);
+  const pd=table(c,0).map(r=>r.id).reverse().filter(i=>zU.get(i)==='pd'),pu=table(L,0).map(r=>r.id).filter(i=>zL.get(i)==='pu');
+  c.po=[];c.xs=[];
+  for(let i=0;i<Math.min(pd.length,pu.length);i++){c.po.push({id:uid(),h:pd[i],a:pu[i],r:null,po:true});c.xs.push({...L.teams.find(x=>x.id===pu[i])})}
+}
+function seasonHtml(c,done){
+  if(c.closed)return `<section class="wide"><p class="note">Season closed ✓ (recorded in Stats).</p></section>`;
+  if(!done)return '';
+  const L=c.below&&comp(c.below),lowOk=!L||L.gm.every(m=>m.r),po=c.po||[];
+  const opts=S.comps.filter(o=>o.type==='league'&&o.id!==c.id&&!o.closed);
+  let h=`<section class="wide"><h2>Season end</h2><label class="note">League below <select data-act="below"><option value="">None (relegated teams leave, you add replacements)</option>${opts.map(o=>`<option value="${o.id}" ${o.id===c.below?'selected':''}>${esc(o.name)}</option>`).join('')}</select></label>`;
+  h+=`<p class="note">This uses the rules above and those of the league below. Change them first if this year differs; next year's rules and team count are set in the form that opens next.</p>`;
+  if(L&&!lowOk)h+=`<p class="note">Finish ${esc(L.name)} first.</p>`;
+  const need=L&&lowOk&&(c.pa||c.pb)&&((L.qa||0)+(L.qb||0));
+  if(need&&!c.po)h+=`<div class="row" style="margin-top:8px"><button data-act="mkpo">Generate play-offs</button></div>`;
+  if(po.length)h+=`<h3>Promotion play-offs (single match)</h3>`+po.map(m=>mrow(c,m)).join('');
+  const ready=lowOk&&(!need||(c.po&&c.po.every(m=>m.r)));
+  return h+`<div class="row" style="margin-top:12px"><button class="main" data-act="apply" ${ready?'':'disabled'}>Apply promotion / relegation and set up next season</button></div></section>`;
+}
+function nextName(n,label){ // "Primera 2019" -> "Primera 2020"
+  const re=/(\d{4})(?!.*\d)/;
+  if(re.test(n))return n.replace(re,x=>+x+1);
+  const y=parseInt(label);return y?`${n} ${y+1}`:n;
+}
+function applySeason(c){
+  const L=c.below?comp(c.below):null;
+  if(!c.season){const l=prompt('Which season is this? (e.g. 2019, or Clausura 2009)',(c.name.match(/\d{4}(?!.*\d)/)||[c.name])[0]);if(!l)return;c.season=seasonId(l);c.official=true;setOfficial(c)}
+  if(L&&!L.season){L.season=c.season;L.official=true;setOfficial(L)}
+  const label=slabel(c.season);
+  const zU=zones(c),zL=L?zones(L):new Map(),po=c.po||[];
+  const ids=(cc,z,k)=>table(cc,0).map(r=>r.id).filter(i=>z.get(i)===k);
+  const upW=po.filter(m=>poWin(m)===m.a);   // lower team won: it goes up, the upper team goes down
+  const dropU=new Set([...ids(c,zU,'rel'),...upW.map(m=>m.h),...((c.div||1)>1?ids(c,zU,'up'):[])]);   // promoted teams of a lower division leave for the division above
+  const riseL=L?new Set([...ids(L,zL,'up'),...upW.map(m=>m.a)]):new Set();
+  const nU=[...c.teams.filter(x=>!dropU.has(x.id)),...(L?L.teams.filter(x=>riseL.has(x.id)):[])];
+  const nL=L?[...L.teams.filter(x=>!riseL.has(x.id)&&zL.get(x.id)!=='rel'),...c.teams.filter(x=>dropU.has(x.id))]:null;
+  if(L){const old=c.color||L.color||randColor();c.color=L.color=old}
+  [c,L].filter(Boolean).forEach(cc=>{cc.closed=true});
+  const col=L?randColor():c.color;   // the new pair shares a new colour
+  const mk=(cc,list)=>({form:{name:nextName(cc.name,label),season:nextName(label,label),div:cc.div||1,legs:cc.legs,hb:cc.hb||0,n:cc.teams.length,
+      r:[cc.ra,cc.rb,cc.pa,cc.pb,cc.ua,cc.ub,cc.qa,cc.qb].map(v=>v||0),ids:list.map(x=>({id:x.id,s:x.s}))},
+    carry:{avg:[(cc.avg||[])[1]||null,{t:'league',id:cc.id}],color:col}});
+  QUEUE=[mk(c,nU)];if(L)QUEUE.push(mk(L,nL));
+  save();nextForm();
+}
+function nextForm(){
+  const q=QUEUE.shift(),f=q.form;CARRY=q.carry;show('new');
+  $('#nn').value=f.name;$('#nse').value=f.season;$('#nof').checked=true;$('#nt').value='league';$('#ng').value=f.legs||'double';$('#nc').value=f.n;$('#nh').value=f.hb;$('#ndv').value=f.div;
+  ['nra','nrb','npa','npb','nua','nub','nqa','nqb'].forEach((id,i)=>$('#'+id).value=f.r[i]);
+  syncForm();PICK=f.ids;renderPicked();
+  msg('Next season: adjust the name, number of teams and rules if you want, and add replacement teams if the counter is short.');
+}
+function seasonId(l){l=l.trim();let x=S.seasons.find(y=>y.label.toLowerCase()===l.toLowerCase());if(!x){x={id:uid(),label:l};S.seasons.push(x)}return x.id}
+const slabel=id=>(S.seasons.find(x=>x.id===id)||{}).label||'';
+function setOfficial(c){S.comps.forEach(o=>{if(o!==c&&o.type==='league'&&o.official&&o.season===c.season&&(o.div||1)===(c.div||1)){o.official=false;msg('"'+o.name+'" is no longer the official one for that season and division.')}})}
+const dls=()=>`<datalist id="dl-seasons">${S.seasons.map(x=>`<option value="${esc(x.label)}">`).join('')}</datalist><datalist id="dl-series">${[...new Set([...S.cres.map(t=>t.series),...S.comps.map(c=>c.series).filter(Boolean)])].map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`;
+function fixSave(){
+  S.comps=S.comps||[];S.hist=S.hist||[];S.seasons=S.seasons||[];S.seasons.forEach(x=>{if(x.label.startsWith('Primera División '))x.label=x.label.replace('Primera División ','Temporada ')});S.d1=S.d1||{};S.alias=S.alias||{};S.nbase=S.nbase||{};S.natCup=S.natCup||'Copa Argentina';
+  if(!S.nr){const g=(k,v,x)=>({id:uid(),k,v,n:4,series:'',...x}),T={tiers:'5:5,6:8,7:12,8:18,9:30,10:60',extra:0};
+    S.nr={league:[g('p1',415),g('gap',1),g('p2',210),g('p3',100),g('p4',45),g('lgpts',1),g('gtier',0,T)],
+      intl:[g('p1',290),g('p2',170),g('p3',100),g('p4',65),g('pQF',40),g('pR16',15),g('gperf3',32),g('gperf6',81),g('gtier',0,T)],
+      copa:[g('p1',300),g('cgf',1),g('p2',150),g('p3',75),g('p4',40),g('pQF',20),g('pR16',10),g('gtier',0,T)]}}if(!S.sdef){S.sdef={};S.comps.forEach(c=>{if(c.type!=='league'&&c.series)S.sdef[c.series]={type:c.type,n:c.teams.length,legs:c.legs,agg:c.agg,photo:c.photo||''}})}S.tables=S.tables||[];if(!S.d1cols)S.d1cols=S.seasons.filter(x=>x.code).map(x=>x.id);S.cres=S.cres||[];S.nat=S.nat||[];S.pts=S.pts||{};S.div=S.div||{};S.base=S.base||{};
+  if(!S.rules)S.rules=[['part',S.pts.P],['p1',S.pts[1]],['p2',S.pts[2]],['p3',S.pts[3]],['p4',S.pts[4]],['pQF',S.pts.QF]].map(([k,v])=>({id:uid(),k,v:v||0,n:4,series:''}));
+  if(!S.rulesV2){S.rulesV2=true;   // one-time: load your international-cup point values (only where a rule was still 0)
+    [['part',0],['p1',250],['p2',135],['p3',85],['p4',50],['pQF',25],['pR16',10],['gperf3',15],['gperf6',50]].forEach(([k,v])=>{const r=S.rules.find(x=>x.k===k&&!x.series);if(!r)S.rules.push({id:uid(),k,v,n:4,series:''});else if(!r.v)r.v=v});
+    if(!S.rules.some(x=>x.k==='gtier'))S.rules.push({id:uid(),k:'gtier',v:0,n:4,series:'',tiers:'5:5,7:7,8:10,9:12,10:15',extra:2})}
+  (S.titles||[]).forEach(x=>S.cres.push({series:x.series,ed:x.ed,t:x.t,p:1,b:'hand'}));S.titles=[];
+  S.hist.forEach(h=>{if(!h.s&&h.k)h.s=seasonId(h.k)});
+  S.comps.forEach(c=>{if(c.type==='league'&&c.official===undefined)c.official=false});
+}
+function recs(){ // official leagues (live) + archived/imported tables
+  const out=S.hist.filter(h=>h.s).map(h=>({...h,done:true})).concat(S.tables.map(t=>({s:t.s,d:t.d,n:tn(t),o:t.rows.map(r=>r.t),done:true})));
+  S.comps.filter(c=>c.type==='league'&&c.official&&c.season).forEach(c=>out.push({s:c.season,d:c.div||1,n:c.name,o:table(c,0).map(r=>r.id),done:c.gm.every(m=>m.r)}));
+  Object.entries(S.d1).forEach(([k,o])=>out.push({s:k,d:1,n:slabel(k)+' · D1',o,done:true}));   // imported first division positions (lowest priority)
+  return out;
+}
+function renderStats(){
+  const y0=window.scrollY;
+  const R=recs(),ss=S.seasons,sc=S.sc===undefined?'Argentina':S.sc,ctry=sc.toLowerCase();
+  const list=S.teams.filter(t=>!ctry||(t.country||'').toLowerCase()===ctry).sort(byName);
+  let h=`<section class="wide"><h2>Stats</h2><div class="row note">Country shown <input data-act="stctry" value="${esc(sc)}" style="width:140px"> (empty = all)</div>`;
+  h+=seasonsHtml()+divImportHtml();
+  if(!list.length){$('#v-cup').innerHTML=h+`<p class="note">No teams from "${esc(sc)}" in your library.</p></section>`;return}
+  const first={};ss.forEach((x,i)=>R.forEach(r=>{if(r.s===x.id)r.o.forEach(id=>{if(first[id]===undefined)first[id]=i})}));
+  // division of a team in a season: live data first, then the imported list; a team missing from a season that has table data, after appearing before, counts as below (red)
+  const st=(id,i)=>{
+    const sid=ss[i].id,dv=S.div[sid]&&S.div[sid][id],r=R.find(y=>y.s===sid&&y.o.includes(id));
+    if(r)return {d:r.d,p:r.o.indexOf(id)+1,n:r.n,t:r.o.length,done:r.done};
+    if(dv)return {d:dv,p:0};
+    return first[id]!==undefined&&first[id]<i&&!S.div[sid]&&R.some(y=>y.s===sid&&y.d>=2)?{d:3,p:0}:null;
+  };
+  const cell=(v,sc)=>v?`<td class="d${Math.min(v.d,3)}${sc?' selc':''}">${v.d>=3?'3+':v.d}</td>`:`<td${sc?' class="selc"':''}></td>`;
+  if(!statsSel||!list.some(x=>x.id===statsSel))statsSel=list[0].id;
+  const t=team(statsSel),rows=ss.map((x,i)=>({k:x.label,v:st(statsSel,i)})).filter(r=>r.v).reverse(),last=rows[0];
+  const det=`<div class="row" style="margin-top:12px"><select id="stsel">${list.map(x=>`<option value="${x.id}" ${x.id===statsSel?'selected':''}>${esc(x.name)}</option>`).join('')}</select>${badge(t,'lg')}<div><div class="nm">${esc(t.name)}</div><div class="note">${last?`Latest: ${esc(last.k)} · ${last.v.d>=3?'below the simulated divisions':last.v.p?`${esc(last.v.n)} (division ${last.v.d})`:`division ${last.v.d}`}`:'No official season recorded yet'}</div></div></div>`+
+    (rows.length?`<table class="tb" style="margin-top:8px"><tr><th>Season</th><th>League</th><th>Div.</th><th>Position</th></tr>`+rows.map(r=>r.v.d>=3?`<tr><td>${esc(r.k)}</td><td colspan="3" class="note">Below the simulated divisions</td></tr>`:r.v.p?`<tr><td>${esc(r.k)}</td><td>${esc(r.v.n)}</td><td>${r.v.d}</td><td><b>${r.v.p}</b> / ${r.v.t}${r.v.done?'':' (in progress)'}</td></tr>`:`<tr><td>${esc(r.k)}</td><td colspan="3">Division ${r.v.d}</td></tr>`).join('')+`</table>`:'')+
+    '';
+  h+=`<h3>All teams (click a row; its details appear below the table)</h3><div class="mxw"><table class="tb mx"><tr><th>Team</th>${ss.map(x=>`<th class="${STCOLS.has(x.id)?'selc':''}" data-act="stcol" data-id="${x.id}" title="${esc(x.label)}">${esc(x.code||x.label)}</th>`).join('')}</tr>`+
+    list.map(tt=>`<tr class="${tt.id===statsSel?'sel':''}" data-act="stteam" data-id="${tt.id}" style="cursor:pointer"><td>${esc(tt.name)}</td>${ss.map((x,i)=>cell(st(tt.id,i),STCOLS.has(x.id))).join('')}</tr>`).join('')+`</table></div><h3>Team detail</h3>`+det+`</section>`;
+  $('#v-cup').innerHTML=h;window.scrollTo(0,y0);
+}
+function honours(){return cupRecs().filter(x=>x.p===1)}
+
+/* ---------- seasons, first-division positions, cups table ---------- */
+function findSeason(code,label){return S.seasons.find(x=>(x.code&&x.code.toLowerCase()===code.toLowerCase())||x.label.toLowerCase()===label.toLowerCase())}
+function seasonByCode(code,label){let x=findSeason(code,label);if(!x){x={id:uid(),label,code};S.seasons.push(x)}else if(!x.code)x.code=code;return x.id}
+function codeLabel(c){
+  let m=c.match(/^([ACIF])(\d\d)$/i);
+  if(m)return {A:'Apertura',C:'Clausura',I:'Inicial',F:'Final'}[m[1].toUpperCase()]+' 20'+m[2];
+  if(/^T$/i.test(c))return 'Transición';
+  if(m=c.match(/^T(\d\d)$/i))return 'Torneo 20'+m[1];
+  if(m=c.match(/^(\d\d)(\d\d)$/))return +c>=2021?'Temporada '+c:'Temporada 20'+m[1]+'/'+m[2];
+  return c;
+}
+function seasonsHtml(){
+  const ss=S.seasons,used=x=>S.comps.some(c=>c.season===x.id)||S.hist.some(y=>y.s===x.id)||S.d1[x.id];
+  return `<details ${seasOpen?'open':''}><summary data-seas>Seasons (${ss.length}): order and add</summary><div class="row" style="margin-top:8px">`+ss.map(x=>`<span class="pchip" title="${esc(x.label)}">${esc(x.code||x.label)}<button data-act="sup" data-id="${x.id}">↑</button><button data-act="sdn" data-id="${x.id}">↓</button><button data-act="sren" data-id="${x.id}" title="Rename season">✎</button><button class="link" data-act="sdel" data-id="${x.id}" title="Delete season">✕</button></span>`).join('')+
+    `</div><div class="row" style="margin-top:6px"><input data-act="sadd" placeholder="New season, e.g. Apertura 2004" style="width:240px"><select id="sapos"><option value="">at the end</option>${ss.map(x=>`<option value="${x.id}">after ${esc(x.code||x.label)}</option>`).join('')}</select></div></details>`;
+}
+let IMP=null,DIVI=null,LASTP='',CF='',seasOpen=false,cupsOpen=false,CS={k:'pt',d:-1};
+function parsePos(txt){
+  const lines=txt.split(/\r?\n/).filter(l=>l.trim());if(lines.length<2)return null;
+  const d=lines[0].includes('\t')?'\t':(lines[0].split(';').length>lines[0].split(',').length?';':',');
+  const rows=lines.map(l=>l.split(d).map(x=>x.replace(/^"|"$/g,'').trim())),head=rows[0];
+  const cols=head.map((code,i)=>({i,code})).filter(c=>c.i>0&&c.code&&c.code!=='-');
+  const teams=rows.slice(1).filter(r=>r[0]).map(r=>{const pos={};cols.forEach(c=>{const v=parseInt(r[c.i]);if(v>0)pos[c.code]=v});return {name:r[0],pos}});
+  return cols.length&&teams.length?{cols,teams}:null;
+}
+function previewHtml(P){
+  const have=P.teams.filter(t=>S.teams.some(x=>x.name.toLowerCase()===t.name.toLowerCase())).length;
+  const empty=P.cols.filter(c=>!P.teams.some(t=>t.pos[c.code])).map(c=>c.code);
+  const dup=P.cols.filter(c=>{const v=P.teams.map(t=>t.pos[c.code]).filter(Boolean);return new Set(v).size<v.length}).map(c=>c.code);
+  const fresh=P.cols.filter(c=>!findSeason(c.code,codeLabel(c.code))).length;
+  return `<p class="note">${P.teams.length} teams (${have} already in your library, ${P.teams.length-have} will be added as Argentina) · ${P.cols.length} seasons (${fresh} new${empty.length?'; empty for now: '+empty.join(', '):''}).</p>`+
+    (dup.length?`<p style="color:var(--bad)">Repeated positions in: ${dup.join(', ')}. Check the file.</p>`:'')+`<button class="main" data-act="d1go">Import</button>`;
+}
+function commitPos(P){
+  const id={};
+  P.teams.forEach(t=>{let x=S.teams.find(y=>y.name.toLowerCase()===t.name.toLowerCase());if(!x){x={id:uid(),name:t.name,strength:6,logo:'',color:'',country:'Argentina'};S.teams.push(x)}id[t.name]=x.id});
+  P.cols.forEach(c=>{
+    const sid=seasonByCode(c.code,codeLabel(c.code));
+    const o=P.teams.filter(t=>t.pos[c.code]).sort((a,b)=>a.pos[c.code]-b.pos[c.code]).map(t=>id[t.name]);
+    if(!S.d1cols.includes(sid))S.d1cols.push(sid);
+    if(o.length)S.d1[sid]=o;
+  });
+}
+function d1data(){ // imported tables, replaced by an official first-division league of the same season
+  const m={};Object.entries(S.d1).forEach(([k,o])=>m[k]={o,done:true});
+  S.tables.filter(t=>t.d===1).forEach(t=>m[t.s]={o:t.rows.map(r=>r.t),done:true});
+  S.comps.filter(c=>c.type==='league'&&c.official&&c.season&&(c.div||1)===1).forEach(c=>m[c.season]={o:table(c,0).map(r=>r.id),done:c.gm.every(x=>x.r)});
+  return m;
+}
+function renderD1(){
+  const D=d1data(),ss=S.seasons.filter(x=>D[x.id]||S.d1cols.includes(x.id)),ids=new Set();Object.values(D).forEach(x=>x.o.forEach(i=>ids.add(i)));
+  const list=[...ids].map(team).filter(Boolean).sort(byName);
+  const cls=(p,n,done)=>!done?'':p===1?'p1':p===2?'p2':p===3?'p3':p===n?'l3':p===n-1?'l2':p===n-2?'l1':'';
+  let h=`<section class="wide"><h2>First division: final positions</h2>`+seasonsHtml()+
+    `<details style="margin-top:10px" ${Object.keys(S.d1).length?'':'open'}><summary>Import positions from a CSV</summary><p class="note">Rows are teams, columns are seasons (A00 = Apertura 2000, C01 = Clausura 2001, I = Inicial, F = Final, T = Transición, T15 = Torneo 2015, 1617 = 2016/17, 2021 = 2021). Empty cell = not in first division. A column named "-" is skipped. Re-importing updates the same seasons.</p>
+    <input type="file" id="d1file" accept=".csv,.txt"><textarea id="d1txt" rows="4" placeholder="…or paste the table here"></textarea><button data-act="d1chk">Check</button><div id="d1prev"></div></details>`;
+  if(!list.length){$('#v-cup').innerHTML=h+`<p class="note">No positions yet. Import a CSV, or mark an in-game first-division league as official for a season.</p></section>`;return}
+  h+=`<p class="note" style="margin-top:12px">Gold, silver, bronze = top 3. Three shades of red = last 3. Seasons played in the game replace imported ones; * = still in progress.</p><div class="mxw"><table class="tb mx"><tr><th>Team</th>${ss.map(x=>`<th class="${D1COLS.has(x.id)?'selc':''}" data-act="d1col" data-id="${x.id}" title="${esc(x.label)}">${esc(x.code||x.label)}</th>`).join('')}<th>Seas.</th><th>🏆</th></tr>`+
+    list.map(t=>{let n=0,tit=0;const cells=ss.map(x=>{const d=D[x.id],p=d?d.o.indexOf(t.id)+1:0;const sc=D1COLS.has(x.id);if(!p)return `<td${sc?' class="selc"':''}></td>`;n++;if(p===1&&d.done)tit++;return `<td class="${cls(p,d.o.length,d.done)}${sc?' selc':''}">${p}${d.done?'':'*'}</td>`}).join('');
+      return `<tr class="${t.id===D1SEL?'sel':''}" data-act="d1sel" data-id="${t.id}" style="cursor:pointer"><td>${esc(t.name)}</td>${cells}<td>${n}</td><td>${tit||''}</td></tr>`}).join('')+`</table></div></section>`;
+  $('#v-cup').innerHTML=h;
+}
+function recsOf(c){ // placements of a finished cup (null while it is unfinished)
+  const l=c.ko[c.ko.length-1];if(!(l&&l.ties.length===1&&l.ties[0].w)||(c.third&&!c.third.w))return null;
+  const F=l.ties[0],lose=T=>T.b?(T.w===T.a?T.b:T.a):null,r={};
+  c.teams.forEach(x=>r[x.id]='P');
+  c.ko.forEach(rd=>rd.ties.forEach(T=>{const x=lose(T);if(x&&rd.name==='Quarter-finals')r[x]='QF';if(x&&rd.name==='Round of 16')r[x]='R16'}));
+  r[F.w]=1;r[lose(F)]=2;if(c.third){r[c.third.w]=3;r[lose(c.third)]=4}
+  return Object.keys(r).map(t=>({t,p:r[t]}));
+}
+function cupStats(c){ // saved when a cup is counted, so future point rules (goals, perfect groups, big wins...) can use it
+  const st={},g=id=>st[id]=st[id]||{gf:0,ga:0,w:0,d:0,l:0,mp:0,best:0,gp:0,gw:0,wm:[],gl:[]};
+  allM(c).forEach(m=>{
+    if(!m.r||m.dm)return;const [x,y]=m.r.g,H=g(m.h),A=g(m.a);   // the title decider is not part of the league's stats
+    H.gf+=x;H.ga+=y;A.gf+=y;A.ga+=x;H.mp++;A.mp++;H.gl.push(x);A.gl.push(y);
+    if(x>y){H.w++;A.l++;H.best=Math.max(H.best,x-y);H.wm.push(x-y)}else if(x<y){A.w++;H.l++;A.best=Math.max(A.best,y-x);A.wm.push(y-x)}else{H.d++;A.d++}
+    if(m.g!==undefined){H.gp++;A.gp++;if(x>y)H.gw++;else if(x<y)A.gw++}
+  });
+  return st;
+}
+function countHtml(c){
+  if(c.counted)return `<div class="row note" style="margin-top:10px">✅ Counted in the ${isCopaArg(c.series)?'national points':'cups'} table on ${esc(c.counted.at)}. <button class="link" data-act="uncnt">Remove from table</button></div>`;
+  if(!recsOf(c))return '';
+  if(!c.series)return `<p class="note">This cup is finished. Give it a series name and an edition above to be able to count it.</p>`;
+  return `<div class="row" style="margin-top:10px;padding:10px;border:1px solid var(--gold);border-radius:6px"><span>🏁 Finished. Nothing is added to the points tables until you confirm.</span><button class="main" data-act="cnt">Count this cup</button></div>`;
+}
+function tableRecs(){ // what the cups table uses: only cups played in the game and counted with the button
+  const out=[];
+  S.comps.filter(c=>c.type!=='league'&&c.series&&c.counted).forEach(c=>c.counted.recs.forEach(x=>out.push({series:c.series,ed:c.edition||'',t:x.t,p:x.p,st:(c.counted.stats||{})[x.t]})));
+  return out;
+}
+function cupRecs(){ // everything known about cup results, for the Champions tab (imported ones included)
+  const live=tableRecs(),keys=new Set(live.map(x=>x.series+'|'+x.ed));
+  return live.concat(S.cres.filter(x=>!keys.has(x.series+'|'+x.ed)));
+}
+function importCupsHtml(){
+  const imp=S.cres.filter(x=>x.b&&x.b!=='hand').length;
+  return `<h3>Import past cup results</h3><p class="note">For this Champions tab only: editions and winners from before. They never add points or change the cups table (those come from your base totals). Teams not in your library are added.</p><div class="row"><select id="cfmt"><option value="ed" ${CFMT==='ed'?'selected':''}>One line per edition: cup, year, champion, 2nd, 3rd (4th optional)</option><option value="team" ${CFMT==='team'?'selected':''}>One line per team: cup, year, team, placement (1, 2, 3, 4, QF or other)</option></select></div><textarea id="ctxt" rows="5" placeholder="Copa Libertadores, 2009, Estudiantes, Cruzeiro, Nacional"></textarea><div class="row"><button class="main" data-act="cimp">Import</button>${imp?`<button data-act="cundo">Remove last import</button><span class="note">${imp} imported records</span>`:''}</div>`;
+}
+function renderCups(){
+  const all=tableRecs(),series=[...new Set([...all.map(x=>cn(x.series)),...S.comps.filter(c=>c.type!=='league'&&c.series).map(c=>cn(c.series))])].sort(),use=all.filter(x=>!excl(x.series)&&(!CF||cn(x.series)===CF)),row={};
+  if(!CF)Object.entries(S.base).forEach(([id,b])=>row[id]={n:b.n||0,1:b[1]||0,2:b[2]||0,3:b[3]||0,4:b[4]||0,QF:b.QF||0,pt:b.pt||0,g:0});   // base totals are taken as given
+  use.forEach(x=>{const r=row[x.t]=row[x.t]||{n:0,1:0,2:0,3:0,4:0,QF:0,pt:0,g:0};r.n++;if(r[x.p]!==undefined)r[x.p]++;const q=ptsFor(x);r.pt+=q;r.g+=q});
+  const main=(a,b)=>{const x=row[a.id],y=row[b.id];return y.pt-x.pt||x.n-y.n||y[1]-x[1]||y[2]-x[2]||y[3]-x[3]||y[4]-x[4]||y.n-x.n||a.name.localeCompare(b.name)};
+  const all2=Object.keys(row).map(team).filter(Boolean),oth=all2.filter(isOther),rank=all2.filter(t=>!isOther(t)).sort(main),pos=new Map(rank.map((t,i)=>[t.id,i+1]));   // ranking: points, then fewer participations first; "Others" kept apart
+  const srt=(a,b)=>(CS.k==='name'?CS.d*a.name.localeCompare(b.name):CS.d*((row[a.id][CS.k]||0)-(row[b.id][CS.k]||0)))||main(a,b),tl=all2;
+  const sc=[['P','Taking part'],[1,'1st'],[2,'2nd'],[3,'3rd'],[4,'4th'],['QF','Quarter-final']];
+  const th=(k,l,c='')=>`<th class="${c}" data-act="csort" data-k="${k}">${l}${CS.k===k?(CS.d<0?' ▼':' ▲'):''}</th>`;
+  const counted=series.filter(x=>!S.nat.includes(x)).length;
+  const pend=S.comps.filter(c=>c.type!=='league'&&c.series&&!c.counted&&recsOf(c));
+  let h=`<section class="wide"><h2>International cups table</h2>${pend.length?`<p class="note">Finished and waiting to be counted: ${pend.map(c=>esc(c.name)).join(', ')} (open the cup and press Count).</p>`:''}<div class="row"><select id="cfilter"><option value="">All counted cups</option>${series.map(x=>`<option ${x===CF?'selected':''}>${esc(x)}</option>`).join('')}</select></div>`+
+    `<details ${cupsOpen?'open':''} style="margin-top:8px"><summary data-cups>Which cups count here (${counted} of ${series.length})</summary><div class="sgrid">${series.map(x=>`<label class="note"><input type="checkbox" data-act="natsr" data-s="${esc(x)}" ${S.nat.includes(x)?'':'checked'} style="width:auto"> ${esc(x)} <small>(${new Set(all.filter(r=>cn(r.series)===x).map(r=>r.ed)).size} ed.)</small></label>`).join('')}</div><p class="note">Untick a competition, such as Copa Argentina, to keep it out of this table. This applies to imported and in-game results alike, by series name.</p></details>`+
+    `<p class="note">Points = base totals + the Cups points rules applied to cups you counted in the game. Hover a points cell to see the split, for example 1500 base + 30 from the game.</p>`+
+    (tl.length?`<p class="note">Click a column to sort. The gold-marked teams are always the top 10 by points.</p><div class="mxw"><table class="tb mx"><tr>${th('name','Team')}<th>#</th>${th('pt','Pts')}${th('n','Part.')}${th(1,'1st','col1')}${th(2,'2nd','col2')}${th(3,'3rd','col3')}${th(4,'4th')}${th('QF','QF')}</tr>`+
+      [...rank.slice().sort(srt),...(oth.length?['SEP']:[]),...oth.slice().sort(srt)].map(t=>{
+        if(t==='SEP')return `<tr class="sep"><td colspan="9">Others: not counted in the ranking</td></tr>`;
+        const r=row[t.id],v=k=>r[k]||'',o=isOther(t);
+        return `<tr class="${(o?'oth':pos.get(t.id)<=10?'top':'')+(t.id===CUPSEL?' sel':'')}" data-act="cupsel" data-id="${t.id}" style="cursor:pointer"><td><span class="tn">${badge(t,'sm')}${esc(t.name)}</span></td><td>${o?'–':pos.get(t.id)}</td><td ${r.pt?`title="${r.pt-r.g} base + ${r.g} from the game"`:''}><b>${r.pt||''}</b></td><td>${r.n}</td><td class="col1">${v(1)}</td><td class="col2">${v(2)}</td><td class="col3">${v(3)}</td><td>${v(4)}</td><td>${v('QF')}</td></tr>`}).join('')+`</table></div>`
+      :`<p class="note">No cup results yet. Finish a cup that has a series and edition, or import old results below.</p>`);
+  h+=(CF?`<p class="note">With a cup selected, only cups counted in the game are shown (base totals are not split by cup).</p>`:'')+'</section>';
+  $('#v-cup').innerHTML=h;
+}
+
+function autoSrc(c){ // the two most recent earlier seasons that have a table for this division (in-game official league first)
+  const ss=S.seasons,i=ss.findIndex(x=>x.id===c.season),out=[],d=c.div||1;
+  for(let j=i-1;j>=0&&out.length<2;j--){
+    const o=S.comps.find(x=>x.type==='league'&&x!==c&&x.official&&x.season===ss[j].id&&(x.div||1)===d),t=S.tables.find(x=>x.s===ss[j].id&&x.d===d);
+    if(o)out.push({t:'league',id:o.id});else if(t)out.push({t:'tbl',id:t.id});
+  }
+  return [out[1]||null,out[0]||null];
+}
+const srcLabel=s=>s.t==='league'?(comp(s.id)||{}).name:(x=>x?tn(x):'')(S.tables.find(x=>x.id===s.id));
+const autoHtml=(c,slot)=>`<label class="note"><input type="checkbox" data-act="avauto" ${c.avgAuto===true?'checked':''} style="width:auto"> Automatic: previous seasons' tables of this division</label>`+
+  (c.avgAuto===true?`<div class="note">Using: ${autoSrc(c).map(x=>x?esc(srcLabel(x)):'nothing').join(' + ')}</div>`:slot(0)+slot(1));
+function renderTables(){
+  const ord=t=>S.seasons.findIndex(x=>x.id===t.s);
+  let h=`<section class="wide"><h2>League tables (final results)</h2><p class="note">Final table of a league you played elsewhere, per season and division. It feeds the First division and Divisions tabs, and the averages of leagues you play here. Saving again for the same season and division replaces the table.</p><div class="form">
+    <label>Season<select id="tse">${S.seasons.map(x=>`<option value="${x.id}">${esc(x.code||x.label)} · ${esc(x.label)}</option>`).join('')}</select></label>
+    <label>Division (1 = first)<input id="tdv" type="number" min="1" value="1"></label>
+    <label>Country for new teams<input id="tco" value="Argentina"></label></div>
+    <p class="note">One line per team: <code>team, points, played</code> (optionally goals for, goals against). Paste, load a file, or add lines below.</p>
+    <input type="file" id="tfile" accept=".csv,.txt"><textarea id="ttxt" rows="8" placeholder="Boca, 71, 38&#10;River, 68, 38"></textarea>
+    <div class="row"><input id="tq" list="dl-teams" placeholder="Pick a team…"><input id="tp" type="number" step="1" placeholder="Points" style="width:80px"><input id="tg" type="number" placeholder="Played" value="${LASTP}" style="width:80px"><button data-act="tadd">Add line</button></div>
+    <datalist id="dl-teams">${S.teams.filter(t=>(t.country||'').toLowerCase()==='argentina').sort(byName).map(t=>`<option value="${esc(t.name)}">`).join('')}</datalist>
+    <div class="row" style="margin-top:8px"><label class="note"><input type="checkbox" id="tsort" checked style="width:auto"> Sort by points (untick to keep my order)</label><button class="main" data-act="tsave">Save table</button></div>
+    <h3>Saved tables</h3>`;
+  h+=S.tables.length?S.tables.slice().sort((a,b)=>ord(a)-ord(b)||a.d-b.d).map(t=>`<details><summary>${esc(tn(t))} <span class="note">(${t.rows.length} teams)</span> <button class="link" data-act="tedit" data-id="${t.id}" style="color:var(--gold)">Edit</button> <button class="link" data-act="tdel" data-id="${t.id}">Delete</button></summary><table class="tb"><tr><th>#</th><th>Team</th><th>Pts</th><th>P</th><th>Avg</th></tr>${t.rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc((team(r.t)||{}).name||'?')}</td><td>${r.pts}</td><td>${r.p}</td><td>${r.p?(r.pts/r.p).toFixed(3):''}</td></tr>`).join('')}</table></details>`).join(''):'<p class="note">None yet.</p>';
+  $('#v-cup').innerHTML=h+'</section>';
+}
+const TRIG={part:'Taking part',p1:'1st place',p2:'2nd place',p3:'3rd place',p4:'4th place',pQF:'Lost in the quarter-finals',pR16:'Lost in the round of 16',gperf3:'Winning all 3 matches of a group stage',gperf6:'Winning all 6 matches of a group stage',gtier:'Goals scored by a team in one match (tiers)',cgf:'Each goal scored by the champion',gperf:'Winning every group-stage match (any size)',big:'Each win by N or more goals'};
+function ptsFor(x){return ptsWith(S.rules,x)}
+function ptsWith(rules,x){ // points one counted result earns under a list of rules
+  let t=0;
+  const own=new Set(rules.filter(r=>r.series===cn(x.series)).map(r=>r.k)),P={p1:1,p2:2,p3:3,p4:4,pQF:'QF',pR16:'R16'};
+  rules.forEach(r=>{
+    if(r.series&&r.series!==cn(x.series))return;
+    if(!r.series&&own.has(r.k))return;   // a rule written for this cup replaces the general one of the same kind
+    const v=+r.v||0,st=x.st;
+    if(r.k==='part')t+=v;
+    else if(r.k in P){if(x.p===P[r.k])t+=v}
+    else if(r.k==='gap'){if(x.p===1)t+=v*(x.gap||0)}
+    else if(r.k==='lgpts')t+=v*(x.pts||0);
+    else if(r.k==='gperf3'){if(st&&st.gp===3&&st.gw===3)t+=v}
+    else if(r.k==='gperf6'){if(st&&st.gp===6&&st.gw===6)t+=v}
+    else if(r.k==='gperf'){if(st&&st.gp>0&&st.gw===st.gp)t+=v}
+    else if(r.k==='cgf'){if(x.p===1&&st)t+=v*st.gf}
+    else if(r.k==='big'){if(st&&st.wm)t+=v*st.wm.filter(m=>m>=(r.n||4)).length}
+    else if(r.k==='gtier'){if(st&&st.gl)st.gl.forEach(g=>{t+=tierPts(r,g)})}
+  });
+  return t;
+}
+function renderRules(){
+  const series=[...new Set([...cupRecs().map(x=>cn(x.series)),...S.comps.map(c=>c.series).filter(Boolean).map(cn)])].sort();
+  const nb=Object.keys(S.base).length,tot=Object.values(S.base).reduce((a,b)=>a+(b.pt||0),0);
+  $('#v-cup').innerHTML=`<section class="wide"><h2>Points rules (international cups table)</h2><p class="note">These rules apply to every cup you count. Choose a cup in "Applies to" to write a rule just for that cup: it replaces the general rule of the same kind for that cup (for example a 30-point "taking part" rule for Copa Libertadores replaces the 10-point one for all cups, only in that cup). Copa Argentina is kept out of the international table (national points come later). Changing a rule recalculates the table, so decide carefully. Goal and group rules only work for cups counted in the game.</p>`+
+    S.rules.map(r=>`<div class="row" data-id="${r.id}" style="margin-bottom:6px"><b style="min-width:270px">${TRIG[r.k]}</b>${r.k==='gtier'?`<label class="note">tiers (goals:points) <input data-act="rt" value="${esc(r.tiers||'')}" style="width:230px"></label><label class="note">+ per extra goal <input type="number" step="0.5" data-act="rx" value="${r.extra||0}" style="width:60px"></label>`:`<label class="note">points <input type="number" step="0.5" data-act="rv" value="${r.v}" style="width:70px"></label>`}${r.k==='big'?`<label class="note">N <input type="number" min="1" data-act="rn" value="${r.n||4}" style="width:60px"></label>`:''}<select data-act="rs"><option value="">Applies to: all cups</option>${series.map(x=>`<option ${x===r.series?'selected':''}>${esc(x)}</option>`).join('')}</select><button class="link" data-act="rdel" title="Remove rule">✕</button></div>`).join('')+
+    `<div class="row" style="margin-top:10px"><select id="rnew">${Object.entries(TRIG).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select><button data-act="radd">Add rule</button></div>`+
+    `<h3>Base totals for the international cups table</h3><p class="note">This fills the international cups table only (the Argentina leagues table will have its own). Import your tables one at a time: each one only updates its own columns and keeps the rest. These numbers are taken as given and never recalculated. Only cups played in the game and counted with the Count button add on top; imported cup results never add points, because they are already in your base.</p><div class="row"><select id="bkind"><option value="pn">Points and participations: team, points, participations</option><option value="w2">Titles and runner-ups: team, 1st, 2nd</option><option value="t4">Third and fourth places: team, 3rd, 4th</option><option value="qf">Quarter-final losses: team, quarter-finals</option><option value="all">All columns: team, points, participations, 1st, 2nd, 3rd, 4th, quarter-finals</option></select></div><input type="file" id="bfile" accept=".csv,.txt"><textarea id="btxt" rows="6" placeholder="Boca, 520, 40"></textarea><div class="row"><button class="main" data-act="bimp">Import base totals</button>${nb?`<button class="link" data-act="bclr">Clear all base totals</button><span class="note">${nb} teams, ${tot} points in the base</span>`:''}</div>${checkHtml()}</section>`;
+}
+function normCode(t){return {T14:'T','15':'T15','16':'T16'}[t]||t}
+function parseDiv(txt){
+  const lines=txt.split(/\r?\n/).filter(l=>l.trim());if(lines.length<2)return null;
+  const d=lines[0].includes('\t')?'\t':(lines[0].split(';').length>lines[0].split(',').length?';':',');
+  const rows=lines.map(l=>l.split(d).map(x=>x.replace(/^"|"$/g,'').trim())),cols=rows[0].map((code,i)=>({i,code})).filter(c=>c.i>0&&c.code);
+  const teams=rows.slice(1).filter(r=>r[0]).map(r=>{const v={};cols.forEach(c=>{const n=parseInt(r[c.i]);if(n>0)v[c.code]=n});return {name:r[0],v}});
+  return cols.length&&teams.length?{cols,teams}:null;
+}
+function seasonAfter(code,after){ // an existing season, or a new one placed right after the previous column
+  const label=codeLabel(code);let x=findSeason(code,label);
+  if(!x){x={id:uid(),label,code};const i=after?S.seasons.findIndex(y=>y.id===after):-1;if(i>=0)S.seasons.splice(i+1,0,x);else S.seasons.push(x)}
+  else if(!x.code)x.code=code;
+  return x.id;
+}
+function divPreview(P){
+  const have=P.teams.filter(t=>S.teams.some(x=>x.name.toLowerCase()===t.name.toLowerCase())).length,fresh=[];let n=0;
+  P.cols.forEach(c=>c.code.split('+').forEach(tok=>{const k=normCode(tok.trim());n++;if(!findSeason(k,codeLabel(k)))fresh.push(k)}));
+  return `<p class="note">${P.teams.length} teams (${have} in your library, ${P.teams.length-have} new as Argentina) · ${P.cols.length} columns = ${n} seasons (a column like A00+C01 fills both). New seasons: ${fresh.join(', ')||'none'}.</p><button class="main" data-act="dvgo">Import</button>`;
+}
+function commitDiv(P){
+  const id={};let prev=null;
+  P.teams.forEach(t=>{let x=S.teams.find(y=>y.name.toLowerCase()===t.name.toLowerCase());if(!x){x={id:uid(),name:t.name,strength:6,logo:'',color:'',country:'Argentina'};S.teams.push(x)}id[t.name]=x.id});
+  P.cols.forEach(c=>{
+    const sids=c.code.split('+').map(tok=>{const sid=seasonAfter(normCode(tok.trim()),prev);prev=sid;return sid});
+    P.teams.forEach(t=>{const v=t.v[c.code];if(v)sids.forEach(sid=>{(S.div[sid]=S.div[sid]||{})[id[t.name]]=v})});
+  });
+}
+function divImportHtml(){
+  return `<details style="margin-top:10px"><summary>Import divisions per season (CSV)</summary><p class="note">Rows are teams, columns are seasons. 1, 2, 3 = division (3 = third or below). A column like <code>A00+C01</code> fills both seasons; <code>T14</code>, <code>15</code>, <code>16</code> mean Transición, Torneo 2015 and Torneo 2016. Seasons that don't exist yet are created next to the previous column. Importing again overwrites the same cells.</p><input type="file" id="dvfile" accept=".csv,.txt"><textarea id="dvtxt" rows="4" placeholder="…or paste the table here"></textarea><button data-act="dvchk">Check</button><div id="dvprev"></div></details>`;
+}
+
+const BASEFMT={all:['pt','n',1,2,3,4,'QF'],pn:['pt','n'],w2:[1,2],t4:[3,4],qf:['QF']};
+const tn=t=>slabel(t.s)+' · D'+t.d;   // table names follow the season name, so renaming a season renames them
+function teamByName(nm,co){let t=S.teams.find(x=>x.name.toLowerCase()===nm.toLowerCase());if(!t){t={id:uid(),name:nm,strength:6,logo:'',color:'',country:co||''};S.teams.push(t)}return t}
+const ctyOf=id=>((team(id)||{}).country||'').toLowerCase();
+function drawGroups(ids,gs){ // random draw of groups of gs; no two teams of the same country together whenever that is possible
+  const G=ids.length/gs,cnt={};ids.forEach(i=>{const c=ctyOf(i);if(c)cnt[c]=(cnt[c]||0)+1});
+  let best=null,bc=1e9;
+  for(let k=0;k<400&&bc>0;k++){
+    const gr=Array.from({length:G},()=>[]);let bad=0;
+    for(const id of shuffle(ids).sort((a,b)=>(cnt[ctyOf(b)]||0)-(cnt[ctyOf(a)]||0))){   // most represented countries first
+      const c=ctyOf(id),open=gr.filter(g=>g.length<gs),ok=open.filter(g=>!(c&&g.some(x=>ctyOf(x)===c)));
+      if(!ok.length)bad++;
+      const pool=ok.length?ok:open,m=Math.min(...pool.map(g=>g.length));
+      shuffle(pool.filter(g=>g.length===m))[0].push(id);
+    }
+    if(bad<bc){bc=bad;best=gr}
+  }
+  best.bad=bc;if(bc)msg('Could not separate every country: '+bc+' team(s) share a group with a team from their country.');
+  return best;
+}
+function pairUp(list){ // random first-round pairs, avoiding two teams of the same country
+  let best=shuffle(list),bc=1e9;
+  for(let k=0;k<400&&bc>0;k++){const a=shuffle(list);let bad=0;for(let i=0;i+1<a.length;i+=2)if(ctyOf(a[i])&&ctyOf(a[i])===ctyOf(a[i+1]))bad++;if(bad<bc){bc=bad;best=a}}
+  return best;
+}
+function tierPts(r,g){ // goals scored by a team in one match: the highest tier reached, plus a fixed amount per goal beyond the last tier
+  const T=String(r.tiers||'').split(',').map(x=>x.split(':').map(Number)).filter(x=>x[0]>0&&!isNaN(x[1])).sort((a,b)=>a[0]-b[0]);
+  if(!T.length||g<T[0][0])return 0;
+  let p=0;T.forEach(([th,pt])=>{if(g>=th)p=pt});
+  const last=T[T.length-1];return g>last[0]?p+(+r.extra||0)*(g-last[0]):p;
+}
+
+function teamTotals(id){ // base totals + cups counted in the game
+  const b=S.base[id]||{},t={n:b.n||0,1:b[1]||0,2:b[2]||0,3:b[3]||0,4:b[4]||0,QF:b.QF||0};
+  tableRecs().filter(x=>x.t===id&&!excl(x.series)).forEach(x=>{t.n++;if(t[x.p]!==undefined)t[x.p]++});
+  return t;
+}
+function pastFinals(a,b){ // earlier finals between these two teams (scores are known for cups played in the game)
+  const out=[],pair=(x,y)=>(x===a&&y===b)||(x===b&&y===a);
+  S.comps.filter(c=>c.type!=='league'&&c.counted&&c.ko.length).forEach(c=>{
+    const l=c.ko[c.ko.length-1],T=l.ties[0];
+    if(l.ties.length===1&&T.b&&T.w&&pair(T.a,T.b)){
+      const m=T.legs.length===1&&T.legs[0].r?T.legs[0]:null,gw=m?(m.h===T.w?m.r.g[0]:m.r.g[1]):0,gl=m?(m.h===T.w?m.r.g[1]:m.r.g[0]):0;
+      out.push({s:c.series,ed:c.edition,w:T.w,score:m?`${gw}-${gl}${m.r.p?' on penalties':''}`:''});
+    }
+  });
+  const by={};S.cres.forEach(x=>{if(x.p===1||x.p===2){const k=x.series+'|'+x.ed;(by[k]=by[k]||{})[x.p]=x.t}});
+  Object.entries(by).forEach(([k,v])=>{const [s,ed]=k.split('|');if(v[1]&&v[2]&&pair(v[1],v[2])&&!out.some(o=>o.s===s&&o.ed===ed))out.push({s,ed,w:v[1],score:''})});
+  return out;
+}
+function factsHtml(c){const f=factsFor(c);return f.length?`<aside class="facts"><h3>Did you know?</h3>${f.map(x=>`<p>${esc(x)}</p>`).join('')}</aside>`:''}
+
+const cn=s=>S.alias[s]||s;   // cups written with different names can be grouped as editions of one cup
+let CHF='',grpOpen=false;
+function aliasGroups(){ // numbered editions written as separate names: "Copa X 1º", "Copa X 2º"…
+  const raws=[...new Set(S.cres.map(x=>x.series).concat(S.comps.map(c=>c.series).filter(Boolean)))],g={};
+  raws.forEach(r=>{if(S.alias[r])return;const m=r.match(/^(.*?[^\d\s])\s*\d+\s*[º°ª]?$/);if(m)(g[m[1]]=g[m[1]]||[]).push(r)});
+  return Object.fromEntries(Object.entries(g).filter(([b,l])=>l.length>1));
+}
+function editionsOf(cup){ // one row per edition with its top four
+  const m={};
+  cupRecs().filter(x=>cn(x.series)===cup&&[1,2,3,4].includes(x.p)).forEach(x=>{const k=x.series+'|'+x.ed;(m[k]=m[k]||{series:x.series,ed:x.ed})[x.p]=x.t});
+  return Object.values(m).sort((a,b)=>(parseFloat(a.ed)||0)-(parseFloat(b.ed)||0)||a.series.localeCompare(b.series,undefined,{numeric:true}));
+}
+function renderChamps(){
+  const y0=window.scrollY,rec=cupRecs().filter(x=>!isCopaArg(x.series)),all=rec.filter(x=>[1,2,3,4].includes(x.p)),cups=[...new Set(rec.map(x=>cn(x.series)))].sort((a,b)=>a.localeCompare(b));
+  if(CHF&&!cups.includes(CHF))CHF='';
+  const years=[...new Set(rec.map(x=>String(x.ed||'')).filter(Boolean))].sort((a,b)=>(parseFloat(b)||0)-(parseFloat(a)||0));
+  if(CHY&&!years.includes(CHY))CHY='';
+  const use=all.filter(x=>(!CHF||cn(x.series)===CHF)&&(!CHY||String(x.ed)===CHY)),by={};
+  use.forEach(x=>{const r=by[x.t]=by[x.t]||{1:0,2:0,3:0,4:0};r[x.p]++});
+  const tl=Object.keys(by).map(team).filter(Boolean).sort((a,b)=>{const x=by[a.id],y=by[b.id];return y[1]-x[1]||y[2]-x[2]||y[3]-x[3]||y[4]-x[4]||a.name.localeCompare(b.name)});
+  const mainT=tl.filter(t=>!isOther(t)),othT=tl.filter(isOther);
+  const col=s=>`hsl(${(cups.indexOf(s)*137+40)%360} 65% 58%)`,nme=id=>id?`${badge(team(id),'sm')} ${esc((team(id)||{}).name||'?')}`:'';
+  let h=`<section class="wide"><h2>Champions</h2><div class="row" style="max-height:140px;overflow:auto"><button class="${CHF?'':'main'}" data-act="chcup" data-s="">All cups</button>`+
+    cups.map(x=>`<button class="${x===CHF?'main':''}" data-act="chcup" data-s="${esc(x)}">${esc(x)} <small>(${editionsOf(x).length})</small></button>`).join('')+`</div><div class="row" style="margin-top:6px"><label class="note">Year <select data-act="chyear"><option value="">All years</option>${years.map(y=>`<option ${y===CHY?'selected':''}>${esc(y)}</option>`).join('')}</select></label></div>`+
+    `<div class="chgrid"><div class="cell"><h3>${CHF?esc(CHF)+': ':''}${CHY?esc(CHY)+': ':''}Ranking</h3><input id="chsearch" type="search" placeholder="Search a team…" style="width:100%;margin-bottom:6px">`+
+    (tl.length?`<table class="tb stk"><tr><th></th><th>Team</th><th>1st</th><th>2nd</th><th>3rd</th><th>4th</th></tr>`+[...mainT,...(othT.length?['SEP']:[]),...othT].map(t=>{if(t==='SEP')return `<tr class="sep"><td colspan="6">Others (not counted)</td></tr>`;const r=by[t.id],v=k=>r[k]||'';return `<tr class="${(isOther(t)?'oth ':'')+(t.id===CHT?'sel':'')}" data-n="${esc(t.name.toLowerCase())}" data-act="chteam" data-id="${t.id}" style="cursor:pointer"><td>${badge(t,'sm')}</td><td>${esc(t.name)}</td><td><b>${v(1)}</b></td><td>${v(2)}</td><td>${v(3)}</td><td>${v(4)}</td></tr>`}).join('')+`</table>`:`<p class="note">No results yet. Import editions below, or count a finished cup.</p>`)+
+    `</div><div class="cell"><h3>Trophy cabinet</h3>`+
+    (c3=>[...c3.filter(t=>!isOther(t)),...(c3.some(isOther)?['SEP']:[]),...c3.filter(isOther)])(tl.filter(t=>by[t.id][1]>0)).map(t=>{if(t==='SEP')return `<h4 class="note">Others</h4>`;const w=use.filter(x=>x.t===t.id&&x.p===1),cs=[...new Set(w.map(x=>cn(x.series)))].sort();
+      return `<div class="cab" data-n="${esc(t.name.toLowerCase())}" style="${isOther(t)?'opacity:.55':''}">${badge(t,'lg')}<div><div class="nm">${esc(t.name)}</div>`+cs.map(x=>{const e=w.filter(y=>cn(y.series)===x);return `<div><span style="color:${col(x)}">${esc(x)}</span> `+e.map(y=>`<span class="troph tr-silver" style="--c:${col(x)}" title="${esc(y.series+' '+y.ed)}">🏆</span>`).join('')+` <small class="note">${esc(e.map(y=>y.ed).filter(Boolean).join(', '))}</small></div>`}).join('')+`</div></div>`}).join('')+`</div></div>`;
+  if(CHT&&team(CHT)){ // same layout as the edition table of a cup, but for every edition where this team reached the podium
+    const rows=[];cups.forEach(x=>editionsOf(x).forEach(e=>{if([1,2,3,4].some(k=>e[k]===CHT))rows.push({cup:x,...e})}));
+    rows.sort((a,b)=>(parseFloat(a.ed)||0)-(parseFloat(b.ed)||0)||a.cup.localeCompare(b.cup)||a.series.localeCompare(b.series,undefined,{numeric:true}));
+    const cnt=k=>rows.filter(e=>e[k]===CHT).length,who=id=>id?`<span ${id!==CHT?`data-act="chgo" data-id="${id}" style="cursor:pointer" title="Show this team"`:''}>${badge(team(id),'sm')} ${esc((team(id)||{}).name||'?')}</span>`:'';
+    h+=`<h3>${esc(team(CHT).name)}: every edition on the podium <small class="note">${cnt(1)} titles · ${cnt(2)} runner-ups · ${cnt(3)} third · ${cnt(4)} fourth. Click another team to see its podiums, or this team again to close.</small></h3><div style="overflow-x:auto;max-height:520px;overflow-y:auto"><table class="tb stk"><tr><th>Cup</th><th>Edition</th><th>Name</th><th>🏆 Champion</th><th>2nd</th><th>3rd</th><th>4th</th></tr>`+
+      rows.map(e=>`<tr><td>${esc(e.cup)}</td><td>${esc(e.ed)}</td><td class="note">${esc(e.series)}</td>`+[1,2,3,4].map(k=>`<td class="${e[k]===CHT?'me':''}">${who(e[k])}</td>`).join('')+`</tr>`).join('')+`</table></div>`;
+  }
+  if(CHY){   // same layout, for every cup played that year
+    const rows=[];cups.forEach(x=>editionsOf(x).forEach(e=>{if(String(e.ed)===CHY)rows.push({cup:x,...e})}));
+    rows.sort((a,b)=>a.cup.localeCompare(b.cup)||a.series.localeCompare(b.series,undefined,{numeric:true}));
+    h+=`<h3>${esc(CHY)}: every cup of the year</h3><div style="overflow-x:auto;max-height:520px;overflow-y:auto"><table class="tb stk"><tr><th>Cup</th><th>Name</th><th>🏆 Champion</th><th>2nd</th><th>3rd</th><th>4th</th></tr>`+
+      rows.map(e=>`<tr><td>${esc(e.cup)}</td><td class="note">${esc(e.series)}</td><td>${nme(e[1])}</td><td>${nme(e[2])}</td><td>${nme(e[3])}</td><td>${nme(e[4])}</td></tr>`).join('')+`</table></div>`;
+  }
+  if(CHF){
+    h+=`<h3>${esc(CHF)}: edition by edition</h3><div style="overflow-x:auto;max-height:520px;overflow-y:auto"><table class="tb stk"><tr><th>Edition</th><th>Name</th><th>🏆 Champion</th><th>2nd</th><th>3rd</th><th>4th</th></tr>`+
+      editionsOf(CHF).map(e=>`<tr><td>${esc(e.ed)}</td><td class="note">${esc(e.series)}</td><td>${nme(e[1])}</td><td>${nme(e[2])}</td><td>${nme(e[3])}</td><td>${nme(e[4])}</td></tr>`).join('')+`</table></div>`;
+  }
+  const raws=[...new Set(rec.map(x=>x.series).concat(S.comps.map(c=>c.series).filter(Boolean)))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),sug=aliasGroups();
+  h+=`<details ${grpOpen?'open':''} style="margin-top:14px"><summary data-grp>Group cups that have different names (${Object.keys(S.alias).length} grouped)</summary>`+
+    (Object.keys(sug).length?`<p class="note">Suggested groups, numbered editions of the same cup: ${Object.entries(sug).map(([b,l])=>`<b>${esc(b)}</b> (${l.length} names)`).join(', ')}.</p><button class="main" data-act="aliasall">Apply suggestions</button>`:`<p class="note">No numbered names left to group.</p>`)+
+    `<p class="note">Or choose by hand: write which cup each name is an edition of (leave empty for a cup on its own).</p><div class="sgrid">${raws.map(r=>`<label class="note">${esc(r)}<input data-act="alias" data-s="${esc(r)}" list="dl-series" value="${esc(S.alias[r]||'')}" placeholder="same cup as…"></label>`).join('')}</div></details>`+
+    `${dls()}`;
+  const hand=S.cres.map((x,i)=>({...x,i})).filter(x=>x.p===1&&x.b==='hand');
+  if(hand.length)h+=`<h3>Added by hand</h3>`+hand.map(x=>`<div class="row note">${esc(x.series)} ${esc(x.ed)} – ${esc((team(x.t)||{}).name||'?')} <button class="link" data-act="delt" data-i="${x.i}">✕</button></div>`).join('');
+  $('#v-cup').innerHTML=h+importCupsHtml()+`</section>`;window.scrollTo(0,y0);
+  const q=$('#chsearch');if(q){q.value=CHQ;applyCHQ()}
+}
+function checkHtml(){ // base totals (cups table) against the editions list (Champions): they are filled separately, so they can disagree
+  const names={1:'1st',2:'2nd',3:'3rd',4:'4th'},ed={};
+  const cols=[1,2,3,4].filter(k=>S.cres.some(x=>x.p===k)&&Object.values(S.base).some(b=>(b[k]||0)>0));
+  let h=`<h3>Check: base totals vs imported editions</h3>`;
+  if(!cols.length)return h+`<p class="note">Import the editions (Champions tab) and the base columns for 1st/2nd/3rd/4th to see the comparison.</p>`;
+  S.cres.filter(x=>[1,2,3,4].includes(x.p)&&!excl(x.series)).forEach(x=>{(ed[x.t]=ed[x.t]||{})[x.p]=((ed[x.t]||{})[x.p]||0)+1});
+  const ids=[...new Set([...Object.keys(S.base),...Object.keys(ed)])].filter(id=>team(id));
+  const rows=ids.map(id=>{const b=S.base[id]||{},e=ed[id]||{};return {id,b,e,bad:cols.filter(k=>(b[k]||0)!==(e[k]||0))}}).filter(r=>r.bad.length).sort((a,b)=>team(a.id).name.localeCompare(team(b.id).name));
+  return h+`<p class="note">Compares ${cols.map(k=>names[k]).join(', ')}. Each cell reads base / editions. ${ids.length-rows.length} teams match and ${rows.length} differ. A difference usually means an edition is missing from the list, or a name was written differently.</p>`+
+    (rows.length?`<div style="overflow:auto;max-height:420px"><table class="tb"><tr><th>Team</th>${cols.map(k=>`<th>${names[k]}</th>`).join('')}</tr>${rows.map(r=>`<tr><td>${esc(team(r.id).name)}</td>${cols.map(k=>`<td style="${r.bad.includes(k)?'color:var(--bad);font-weight:700':''}">${r.b[k]||0} / ${r.e[k]||0}</td>`).join('')}</tr>`).join('')}</table></div>`:'');
+}
+$('#tsearch').addEventListener('input',e=>{LQ=e.target.value.trim().toLowerCase();renderTeams()});
+
+const isOther=t=>(t.country||'').trim().toLowerCase()==='others';   // teams outside the competitions you follow: greyed out and listed last
+let CUR=null;
+function ptsMap(){const m={};Object.entries(S.base).forEach(([id,b])=>m[id]=b.pt||0);tableRecs().filter(x=>!excl(x.series)).forEach(x=>{m[x.t]=(m[x.t]||0)+ptsFor(x)});return m}
+function rankOf(id,pts,m){const n0=teamTotals(id).n;return 1+Object.keys(m).filter(o=>o!==id&&team(o)&&!isOther(team(o))&&(m[o]>pts||(m[o]===pts&&teamTotals(o).n<n0))).length}
+function extraChance(side){ // one more digit for one team in the match just played; it only changes this match
+  if(!LAST||!CUR||LAST.some(e=>e.ph!=='reg'))return;   // not offered once there was extra time or penalties
+  const k=LAST.filter(e=>e.side===side).length,slot=LAST.reduce((m,e)=>Math.max(m,e.slot+1),0),tg=(k%6)+1,r=d6();
+  let ev=LAST.concat([{ph:'reg',side,slot,roll:r,target:tg,goal:r===tg,x:true}]);
+  const g=()=>[0,1].map(s=>ev.filter(e=>e.ph!=='pen'&&e.side===s&&e.goal).length+CUR.carry[s]);
+  // in a knockout a win can turn into a draw: then extra time / penalties are played as usual
+  if(CUR.mode==='etpen'&&g()[0]===g()[1])ev=ev.concat(phase('et',etChances(CUR.A.strength),etChances(CUR.B.strength)));
+  if(CUR.mode&&g()[0]===g()[1])ev=ev.concat(penalties());
+  const k0=LAST.length+1;ev.forEach((e,i)=>e.i=i);LAST=ev;playRest(ev,k0,ev.length>k0);
+}
+$('#mp').addEventListener('click',e=>{
+  const b=e.target.closest('[data-xt]'),g=e.target.closest('[data-go]'),x=e.target.closest('[data-etx]');
+  if(b)extraChance(+b.dataset.xt);
+  if(g&&RESUME){const r=RESUME;RESUME=null;r()}
+  if(x)addExtraTime();
+});
+
+const isArg=t=>!!t&&(t.country||'').trim().toLowerCase()==='argentina';
+const isCopaArg=s=>{const x=cn(s).trim().toLowerCase(),n=(S.natCup||'').trim().toLowerCase();return !!n&&(x===n||x.replace(/\s*\d[\d\/\-]*\s*[º°ª]?$/,'').trim()===n)};
+const excl=s=>S.nat.includes(cn(s))||isCopaArg(s);   // series kept out of the international cups table
+const allRules=()=>[...S.rules,...S.nr.league,...S.nr.intl,...S.nr.copa];
+const NLAB={p1:'1st place',p2:'2nd place',p3:'3rd place',p4:'4th place',pQF:'Lost in the quarter-finals',pR16:'Lost in the round of 16',gperf3:'Winning all 3 matches of a group stage',gperf6:'Winning all 6 matches of a group stage',cgf:'Champion: each goal scored in the whole cup (not shootouts)',gap:'Champion: each point of lead over 2nd place',lgpts:'Each league point earned (every first division team)',gtier:'Goals scored by a team in one match (tiers)'};
+let NS={k:'pt',d:-1};
+function natPoints(){ // national points per Argentine team: base + first-division leagues + international cups + Copa Argentina, all counted in the game
+  const m={},add=(id,k,v)=>{const r=m[id]=m[id]||{base:0,lg:0,intl:0,ca:0};r[k]+=v};
+  Object.entries(S.nbase).forEach(([id,v])=>add(id,'base',v));
+  S.comps.filter(c=>c.type==='league'&&c.ncounted).forEach(c=>c.ncounted.recs.forEach(x=>add(x.t,'lg',ptsWith(S.nr.league,{series:'League',p:x.p,pts:x.pts,gap:x.gap,st:(c.ncounted.stats||{})[x.t]}))));
+  tableRecs().forEach(x=>{const ca=isCopaArg(x.series);add(x.t,ca?'ca':'intl',ptsWith(ca?S.nr.copa:S.nr.intl,x))});
+  Object.keys(m).forEach(id=>{if(!isArg(team(id)))delete m[id]});
+  return m;
+}
+function ncountHtml(c,done){
+  if((c.div||1)!==1||!done)return '';
+  if(c.ncounted)return `<section class="wide"><div class="row note">✅ Counted in the national points table on ${esc(c.ncounted.at)}. <button class="link" data-act="nuncnt">Remove from table</button></div></section>`;
+  return `<section class="wide"><div class="row" style="padding:10px;border:1px solid var(--gold);border-radius:6px"><span>🏁 First division league finished. Nothing is added to the national points table until you confirm.</span><button class="main" data-act="ncnt">Count in national table</button></div></section>`;
+}
+const nrow=r=>`<div class="row" data-id="${r.id}" style="margin-bottom:6px"><b style="min-width:340px">${NLAB[r.k]}</b>`+(r.k==='gtier'?`<label class="note">tiers (goals:points) <input data-act="rt" value="${esc(r.tiers||'')}" style="width:240px"></label><label class="note">+ per extra goal <input type="number" step="0.5" data-act="rx" value="${r.extra||0}" style="width:60px"></label>`:`<label class="note">points <input type="number" step="0.5" data-act="rv" value="${r.v}" style="width:80px"></label>`)+`</div>`;
+function renderNat(){
+  const y0=window.scrollY,m=natPoints(),L={},I={},C={};
+  Object.values(d1data()).forEach(x=>{if(x.done&&x.o[0])L[x.o[0]]=(L[x.o[0]]||0)+1});
+  cupRecs().filter(x=>x.p===1).forEach(x=>{const o=isCopaArg(x.series)?C:I;o[x.t]=(o[x.t]||0)+1});
+  const ids=[...new Set([...Object.keys(m),...Object.keys(L),...Object.keys(I),...Object.keys(C)])].filter(id=>isArg(team(id)));
+  const rows=ids.map(id=>{const r=m[id]||{base:0,lg:0,intl:0,ca:0};return {id,...r,pt:r.base+r.lg+r.intl+r.ca,L:L[id]||0,I:I[id]||0,C:C[id]||0,N:teamTotals(id).n}});
+  const main=(a,b)=>b.pt-a.pt||b.L-a.L||b.I-a.I||b.C-a.C||team(a.id).name.localeCompare(team(b.id).name);
+  const pos=new Map(rows.slice().sort(main).map((r,i)=>[r.id,i+1]));
+  if(!NSEL||!rows.some(r=>r.id===NSEL))NSEL=rows.length?rows.slice().sort((a,b)=>b.pt-a.pt)[0].id:null;
+  const srt=(a,b)=>(NS.k==='name'?NS.d*team(a.id).name.localeCompare(team(b.id).name):NS.d*(a[NS.k]-b[NS.k]))||main(a,b);
+  const th=(k,l,t='')=>`<th title="${t}" data-act="nsort" data-k="${k}">${l}${NS.k===k?(NS.d<0?' ▼':' ▲'):''}</th>`,ic=(n,cl)=>n?`${n} <span class="tr ${cl}">🏆</span>`:'';
+  const nme=id=>id?`${badge(team(id),'sm')} ${esc((team(id)||{}).name||'?')}`:'',ed=editionsOf(S.natCup),nb=Object.keys(S.nbase).length;
+  let h=`<section class="wide"><h2>National points table (Argentina)</h2><p class="note">League points count only for first-division leagues. Hover a points cell to see where they come from. <span class="tr tr-gold">🏆</span> league · <span class="tr tr-silver">🏆</span> international cup · <span class="tr tr-blue">🏆</span> Copa Argentina.</p>`+
+    (rows.length?`<div class="mxw"><table class="tb mx"><tr>${th('name','Team')}<th>#</th>${th('pt','Pts')}${th('L','<span class="tr tr-gold">🏆</span>','League titles (first division)')}${th('I','<span class="tr tr-silver">🏆</span>','International cup titles')}${th('C','<span class="tr tr-blue">🏆</span>','Copa Argentina titles')}${th('N','Cups','Participations in international cups (Copa Argentina not included)')}</tr>`+
+      rows.slice().sort(srt).map(r=>`<tr class="${(pos.get(r.id)<=10?'top ':'')+(r.id===NSEL?'sel':'')}" data-act="nteam" data-id="${r.id}" style="cursor:pointer"><td><span class="tn">${badge(team(r.id),'sm')}${esc(team(r.id).name)}</span></td><td>${pos.get(r.id)}</td><td title="base ${r.base} + league ${r.lg} + international cups ${r.intl} + Copa Argentina ${r.ca}"><b>${r.pt||''}</b></td><td>${ic(r.L,'tr-gold')}</td><td>${ic(r.I,'tr-silver')}</td><td>${ic(r.C,'tr-blue')}</td><td>${r.N||''}</td></tr>`).join('')+`</table></div>`:`<p class="note">No data yet. Import the totals below.</p>`)+natDetail(rows)+
+    `<h3>Base totals (already happened)</h3><p class="note">Paste <code>team, points</code>. They are taken as given and never recalculated; leagues and cups you count in the game add on top. Importing a team again replaces its base. Titles in the columns above come from your first division table and the editions you imported.</p><input type="file" id="nfile" accept=".csv,.txt"><textarea id="ntxt" rows="5" placeholder="Boca, 14500"></textarea><div class="row"><button class="main" data-act="nbimp">Import national totals</button>${nb?`<button class="link" data-act="nbclr">Clear all</button><span class="note">${nb} teams in the base</span>`:''}</div>`+
+    `<details ${NROPEN?'open':''} style="margin-top:14px"><summary data-nr>Points rules (league · international cups · Copa Argentina)</summary><p class="note">Copa Argentina series name: <input data-act="natcup" value="${esc(S.natCup)}" style="width:200px"> (cups with this name only count here, never in the international cups table or Champions)</p>`+
+    [['League (first division only)','league','tr-gold'],['International cups (Argentine teams)','intl','tr-silver'],['Copa Argentina','copa','tr-blue']].map(([t,k,c])=>`<h4><span class="tr ${c}">🏆</span> ${t}</h4>`+S.nr[k].map(nrow).join('')).join('')+`</details>`+
+    `<h3>Copa Argentina: editions</h3>`+(ed.length?`<div class="mxw"><table class="tb stk"><tr><th>Edition</th><th>Champion</th><th>2nd</th><th>3rd</th><th>4th</th></tr>${ed.map(e=>`<tr><td>${esc(e.ed)}</td><td>${nme(e[1])}</td><td>${nme(e[2])}</td><td>${nme(e[3])}</td><td>${nme(e[4])}</td></tr>`).join('')}</table></div>`:`<p class="note">None yet. Import them below, using the Copa Argentina series name above.</p>`)+importCupsHtml()+`</section>`;
+  $('#v-cup').innerHTML=h;window.scrollTo(0,y0);
+}
+
+const gd=n=>`<span class="${n>0?'pos':n<0?'neg':''}">${n>0?'+':''}${n}</span>`;   // goal difference: +green / red
+let NSEL=null,CFMT='ed';
+function showExp(){
+  const e=$('#lastexp');if(!e)return;
+  if(!S.lastExport){e.textContent='Never exported';e.style.color='var(--gold)';return}
+  const d=Math.floor((Date.now()-S.lastExport)/864e5);
+  e.textContent='Last export: '+(d===0?'today':d===1?'yesterday':d+' days ago');e.style.color=d>=7?'var(--gold)':'';
+}
+function natDetail(rows){ // where each title of the chosen team came from
+  if(!rows.length||!NSEL)return '';
+  const id=NSEL,t=team(id),D=d1data(),lg=S.seasons.filter(x=>D[x.id]&&D[x.id].done&&D[x.id].o[0]===id).map(x=>x.label);
+  const it={},ca=[];
+  cupRecs().filter(x=>x.t===id&&x.p===1).forEach(x=>{if(isCopaArg(x.series))ca.push(x.ed||x.series);else(it[cn(x.series)]=it[cn(x.series)]||[]).push(x.ed)});
+  const pills=l=>l.length?l.map(x=>`<span class="pill">${esc(x)}</span>`).join(' '):'<span class="note">none</span>',nI=Object.values(it).reduce((a,l)=>a+l.length,0);
+  return `<h3>Team detail</h3><div class="row"><select id="nsel">${rows.slice().sort((a,b)=>team(a.id).name.localeCompare(team(b.id).name)).map(r=>`<option value="${r.id}" ${r.id===id?'selected':''}>${esc(team(r.id).name)}</option>`).join('')}</select>${badge(t,'lg')}<div class="nm">${esc(t.name)}</div></div>`+
+    `<div style="margin-top:10px"><span class="tr tr-gold">🏆</span> <b>League titles (${lg.length})</b><div>${pills(lg)}</div></div>`+
+    `<div style="margin-top:10px"><span class="tr tr-silver">🏆</span> <b>International cups (${nI})</b>${Object.keys(it).sort().map(k=>`<div>${esc(k)} <small class="note">×${it[k].length}: ${esc(it[k].filter(Boolean).sort((a,b)=>parseFloat(a)-parseFloat(b)).join(', '))}</small></div>`).join('')||'<div class="note">none</div>'}</div>`+
+    `<div style="margin-top:10px"><span class="tr tr-blue">🏆</span> <b>Copa Argentina (${ca.length})</b><div>${pills(ca)}</div></div>`;
+}
+
+function table(c,g){ // the champion of a league: points, goal difference, goals scored, then a decider match (see ensureDM)
+  let t=tableRaw(c,g);
+  if(g===0&&c.type==='league'&&c.dmw){
+    const a=t[0],grp=t.filter(r=>r.pts===a.pts&&r.gf-r.ga===a.gf-a.ga&&r.gf===a.gf),w=grp.find(r=>r.id===c.dmw);
+    if(grp.length>1&&w)t=[w,...t.filter(r=>r!==w)];
+  }
+  return t;
+}
+function tiedTop(c){ // teams level on points, goal difference and goals scored at the top of a finished league
+  if(c.type!=='league'||!c.gm.length||!c.gm.every(m=>m.r))return [];
+  const t=tableRaw(c,0),a=t[0],g=t.filter(r=>r.pts===a.pts&&r.gf-r.ga===a.gf-a.ga&&r.gf===a.gf).map(r=>r.id);
+  return g.length>1?g:[];
+}
+function ensureDM(c){
+  if(c.dm||c.dmw)return;const g=tiedTop(c);if(!g.length)return;
+  c.dmq=g.slice(2);c.dm=[{id:uid(),h:g[0],a:g[1],r:null,po:true,dm:true}];save();
+}
+function advanceDM(c){ // single matches in a chain until one team is left
+  const m=c.dm[c.dm.length-1];if(!m||!m.r)return;
+  const w=poWin(m);
+  if(c.dmq.length)c.dm.push({id:uid(),h:w,a:c.dmq.shift(),r:null,po:true,dm:true});else c.dmw=w;
+}
+function dmHtml(c){
+  if(!c.dm)return '';
+  const g=tiedTop(c).map(id=>tm(c,id).name);
+  return `<section class="wide"><h2>Title decider</h2><p class="note">${esc(g.join(', '))} finished level on points, goal difference and goals scored. A single match (extra time and penalties if needed) decides the champion.</p>${c.dm.map(m=>mrow(c,m)).join('')}${c.dmw?`<p class="champ" style="font-size:20px">🏆 ${esc(tm(c,c.dmw).name)} win the title</p>`:''}</section>`;
+}
+function updMods(){ // friendly match: show the chances each team will really have
+  if(CTX)return;
+  ['A','B'].forEach(k=>{
+    const t=team(S['sel'+k]),el=$('#c'+k),q=$('#q'+k.toLowerCase());if(!t||!el||!q)return;
+    const m=parseInt(q.value)||0;
+    el.textContent=t.strength+' chances'+(m?` ${m>0?'+':''}${m} = ${Math.max(0,t.strength+m)} this match`:'');
+  });
+}
+$('#mp').addEventListener('input',e=>{if(e.target.id==='qa'||e.target.id==='qb')updMods()});
+
+function addExtraTime(){ // a friendly that ended level: play extra time and, if still level, penalties
+  if(!LAST||!CUR||LAST.some(e=>e.ph!=='reg'))return;
+  CUR.mode='etpen';let ev=LAST.slice();
+  const g=()=>[0,1].map(s=>ev.filter(e=>e.ph!=='pen'&&e.side===s&&e.goal).length+CUR.carry[s]);
+  if(g()[0]===g()[1])ev=ev.concat(phase('et',etChances(CUR.A.strength),etChances(CUR.B.strength)));
+  if(g()[0]===g()[1])ev=ev.concat(penalties());
+  const k0=LAST.length;ev.forEach((e,i)=>e.i=i);LAST=ev;playRest(ev,k0,false);
+}
+
+function playRest(ev,k0,pause){ // reveal the events after k0 at the chosen speed (extra time / penalties added after the fact)
+  const sp=parseInt($('#speed').value);
+  if(!sp||k0>=ev.length){renderMatch(ev,ev.length,CUR.A,CUR.B,true);return}
+  const A=CUR.A,B=CUR.B,my=++token;RESUME=null;
+  const step=()=>{
+    if(my!==token)return;
+    k0++;renderMatch(ev,k0,A,B,k0>=ev.length);
+    if(k0<ev.length){
+      const nx=ev[k0];
+      if((nx.ph==='et'||nx.ph==='pen')&&ev[k0-1].ph!==nx.ph){
+        $('#win').innerHTML=`<button class="main" data-go="1">${nx.ph==='et'?'Start extra time':'Start penalties'}</button>`;RESUME=()=>{if(my===token)step()};return;
+      }
+      setTimeout(step,nx.ph==='pen'?sp*2.2:sp);
+    }
+  };
+  renderMatch(ev,k0,A,B,false);
+  if(pause){const nx=ev[k0];$('#win').innerHTML=`<button class="main" data-go="1">${nx.ph==='et'?'Start extra time':'Start penalties'}</button>`;RESUME=()=>{if(my===token)step()}}
+  else setTimeout(step,sp);
+}
+
+let KOI=null,CHT=null;
+function rankMap(){ // position in the cups table (Others left out; fewer participations first on equal points)
+  const pm=ptsMap(),ids=Object.keys(pm).filter(id=>team(id)&&!isOther(team(id))),n={};
+  ids.forEach(id=>n[id]=teamTotals(id).n);ids.sort((a,b)=>pm[b]-pm[a]||n[a]-n[b]);
+  return {pm,rank:new Map(ids.map((id,i)=>[id,i+1]))};
+}
+function kinfo(id){ // "#23 · 623 pts · 🏆🏆" next to a team in a knockout match
+  if(!KOI||isOther(team(id)))return '';
+  const r=KOI.rank.get(id),pts=KOI.pm[id]||0,tt=teamTotals(id)[1],ic='<span class="tr tr-silver">🏆</span>';
+  if(!r&&!tt)return '';
+  return `<small class="note tinfo">${r?`#${r} · `:''}${pts} pts${tt?` · ${tt<=3?ic.repeat(tt):ic+'×'+tt}`:''}</small>`;
+}
+
+/* ---------- merge two teams ---------- */
+let MGMAP={},TP=null,RCS=null;
+function fillMG(){
+  const seen={};MGMAP={};
+  const opts=S.teams.slice().sort(byName).map(t=>{let l=t.name+(t.country?` (${t.country})`:'');seen[l]=(seen[l]||0)+1;if(seen[l]>1)l+=` #${seen[l]}`;MGMAP[l]=t.id;return `<option value="${esc(l)}">`});
+  const d=$('#dl-mg');if(d)d.innerHTML=opts.join('');
+}
+function mergeTeams(from,to){ // everything that belongs to "from" moves to "to"; "from" is deleted
+  if(from===to||!team(from)||!team(to))return 'Pick two different teams.';
+  const clash=S.comps.filter(c=>c.teams.some(x=>x.id===from)&&c.teams.some(x=>x.id===to));
+  if(clash.length)return 'Both teams are in '+clash.map(c=>c.name).join(', ')+'. Merging would make a team play itself: remove one of them there first.';
+  const fill=m=>{ // keyed by team: keep what the right team already has, fill the gaps from the wrong one
+    if(!m||m[from]===undefined)return;
+    if(m[to]===undefined||m[to]===0)m[to]=m[from];
+    else if(typeof m[to]==='object'&&m[to]&&typeof m[from]==='object')Object.keys(m[from]).forEach(k=>{if(!m[to][k])m[to][k]=m[from][k]});
+    delete m[from];
+  };
+  fill(S.base);fill(S.nbase);Object.values(S.div).forEach(fill);
+  S.comps.forEach(c=>{[c.counted&&c.counted.stats,c.ncounted&&c.ncounted.stats,...(c.avg||[]).map(a=>a&&a.rows)].forEach(fill)});
+  const A=team(from),B=team(to);['logo','color','country','kits'].forEach(k=>{if(!B[k]&&A[k])B[k]=A[k]});
+  S.teams=S.teams.filter(t=>t.id!==from);
+  S=JSON.parse(JSON.stringify(S).split('"'+from+'"').join('"'+to+'"'));   // every reference, as value or as key
+  const uniq=a=>a.filter((x,i)=>a.indexOf(x)===i);
+  S.comps.forEach(c=>{c.teams=c.teams.filter((x,i,a)=>a.findIndex(y=>y.id===x.id)===i);c.groups=c.groups.map(uniq)});
+  S.hist.forEach(h=>h.o=uniq(h.o));S.tables.forEach(t=>t.rows=t.rows.filter((x,i,a)=>a.findIndex(y=>y.t===x.t)===i));
+  Object.keys(S.d1).forEach(k=>S.d1[k]=uniq(S.d1[k]));
+  S.cres=S.cres.filter((x,i,a)=>a.findIndex(y=>y.series===x.series&&y.ed===x.ed&&y.t===x.t&&y.p===x.p)===i);
+  PICK=[];CTX=null;fixSave();save();return '';
+}
+['#mgf','#mgt'].forEach(q=>$(q).addEventListener('focus',fillMG));   // names may have been edited since the library was drawn
+$('#mgb').onclick=()=>{
+  fillMG();const f=MGMAP[$('#mgf').value],t=MGMAP[$('#mgt').value];
+  if(!f||!t){msg('Pick both teams from the lists.');return}
+  const n=JSON.stringify(S).split('"'+f+'"').length-1,nf=team(f).name,nt=team(t).name;
+  if(!confirm(`Merge "${nf}" into "${nt}"?\n\n${n} references (results, titles, tables, base totals…) move to "${nt}", and "${nf}" is deleted from the library. It cannot be undone, so export a backup first if you are unsure.`))return;
+  const e=mergeTeams(f,t);if(e){msg(e);return}
+  $('#mgf').value='';$('#mgt').value='';renderTeams();renderTabs();show(view);msg(`"${nf}" merged into "${nt}".`);
+};
+
+/* ---------- home: what needs attention + competitions in progress ---------- */
+const attN=()=>{const n=attention().length;return n?` (${n})`:''};
+function isFinished(c){return c.type==='league'?c.gm.every(m=>m.r)&&!(tiedTop(c).length>1&&!c.dmw):!!recsOf(c)}
+function attention(){
+  const out=[],add=(v,t,ic)=>out.push({v,t,ic});
+  S.comps.filter(c=>!c.closed).forEach(c=>{
+    if(c.type==='league'){
+      const all=c.gm.length&&c.gm.every(m=>m.r),pend=tiedTop(c).length>1&&!c.dmw;
+      if(all&&pend)add(c.id,`${c.name}: level at the top, the title decider is waiting`,'⚖️');
+      else if(all){
+        if((c.div||1)===1&&!c.ncounted)add(c.id,`${c.name}: finished, not counted in the national table yet`,'🏁');
+        add(c.id,`${c.name}: finished, the season can be closed (promotion and relegation)`,'📅');
+      }
+    }else{
+      const l=c.ko[c.ko.length-1];
+      if(c.phase==='groups'&&!c.ko.length&&c.gm.length&&c.gm.every(m=>m.r))add(c.id,`${c.name}: group stage finished, start the knockout`,'▶️');
+      if(l&&l.ties.length>1&&l.ties.every(T=>T.w))add(c.id,`${c.name}: ${l.name} finished, move on to the next round`,'▶️');
+      if(recsOf(c)&&!c.counted)add(c.id,c.series?`${c.name}: finished, waiting to be counted`:`${c.name}: finished, give it a series to be able to count it`,'🏁');
+    }
+  });
+  if(!S.lastExport||(Date.now()-S.lastExport)/864e5>=7)add('export',S.lastExport?'No backup export in the last 7 days':'You have never exported a backup','💾');
+  return out;
+}
+function nextMatches(c,n=6){
+  if(c.type==='league'){
+    const u=c.gm.filter(m=>!m.r);
+    if(!u.length)return (c.dm||[]).filter(m=>!m.r);
+    const md=Math.min(...u.map(m=>m.md));return u.filter(m=>m.md===md).slice(0,n);
+  }
+  if(c.phase==='groups'&&!c.ko.length)return c.gm.filter(m=>!m.r).slice(0,n);
+  const l=c.ko[c.ko.length-1];if(!l)return [];
+  const out=[];
+  l.ties.forEach(T=>T.legs.forEach((m,i)=>{if(!m.r&&!(i===1&&!T.legs[0].r))out.push(m)}));
+  if(c.third&&!c.third.w)c.third.legs.forEach(m=>{if(!m.r)out.push(m)});
+  return out.slice(0,n);
+}
+function homeCard(c){
+  const lg=c.type==='league',ic=lg?'tr-gold':isCopaArg(c.series||'')?'tr-blue':'tr-silver';
+  let stage='',done=0,total=1;
+  if(lg){total=c.gm.length;done=c.gm.filter(m=>m.r).length;const u=c.gm.filter(m=>!m.r);stage=u.length?`Matchday ${Math.min(...u.map(m=>m.md))} of ${Math.max(...c.gm.map(m=>m.md))}`:'Title decider'}
+  else if(c.phase==='groups'&&!c.ko.length){total=c.gm.length;done=c.gm.filter(m=>m.r).length;stage='Group stage'}
+  else{const l=c.ko[c.ko.length-1];total=l.ties.length;done=l.ties.filter(T=>T.w).length;stage=l.name}
+  const nx=nextMatches(c),pct=Math.round(100*done/Math.max(1,total));
+  return `<div class="hcard"><div class="row" style="justify-content:space-between"><b><span class="tr ${ic}">🏆</span> ${esc(c.name)}</b><button data-act="gotab" data-v="${c.id}">Open</button></div><div class="note">${esc(stage)} · ${done}/${total} played or decided</div><div class="bar"><i style="width:${pct}%"></i></div>${nx.map(m=>mrow(c,m)).join('')||'<p class="note">Nothing to play right now.</p>'}</div>`;
+}
+function renderHome(){
+  KOI=null;const y0=window.scrollY,at=attention(),prog=S.comps.filter(c=>!c.closed&&!isFinished(c));
+  $('#v-cup').innerHTML=`<section class="wide"><h2>Home</h2><h3>Needs attention ${at.length?`<small class="note">(${at.length})</small>`:''}</h3>`+
+    (at.length?at.map(a=>`<div class="row att"><span>${a.ic} ${esc(a.t)}</span>${a.v==='export'?'<button data-act="expnow">Export now</button>':`<button data-act="gotab" data-v="${a.v}">Open</button>`}</div>`).join(''):'<p class="note">Nothing is waiting. Everything is up to date ✅</p>')+
+    `<h3>In progress</h3>`+(prog.length?`<div class="hgrid">${prog.map(homeCard).join('')}</div>`:'<p class="note">No competition in progress. Create one with + New.</p>')+`</section>`;
+  window.scrollTo(0,y0);
+}
+function refresh(){if(view==='home')renderHome();else renderCup()}
+
+/* ---------- team page ---------- */
+function playedMatches(){const out=[];S.comps.forEach(c=>allM(c).forEach(m=>{if(m.r)out.push({c,m})}));return out}
+function teamTitles(id){
+  const D=d1data(),lg=S.seasons.filter(x=>D[x.id]&&D[x.id].done&&D[x.id].o[0]===id).map(x=>x.label),it={},ca=[];
+  cupRecs().filter(x=>x.t===id&&x.p===1).forEach(x=>{if(isCopaArg(x.series))ca.push(x.ed||x.series);else(it[cn(x.series)]=it[cn(x.series)]||[]).push(x.ed)});
+  return {lg,it,ca};
+}
+function h2h(id){ // record against every opponent, from the matches played in the game (a shootout counts as a draw)
+  const m={};
+  playedMatches().forEach(({m:x})=>{
+    if(x.h!==id&&x.a!==id)return;
+    const home=x.h===id,o=home?x.a:x.h,gf=home?x.r.g[0]:x.r.g[1],gc=home?x.r.g[1]:x.r.g[0],r=m[o]=m[o]||{p:0,w:0,d:0,l:0,gf:0,gc:0};
+    r.p++;r.gf+=gf;r.gc+=gc;if(gf>gc)r.w++;else if(gf<gc)r.l++;else r.d++;
+  });
+  return m;
+}
+function podiumsHtml(id,mode){ // every edition where the team reached the podium, with the full podium
+  const cups=[...new Set(cupRecs().filter(x=>mode==='nat'?isCopaArg(x.series):!isCopaArg(x.series)).map(x=>cn(x.series)))],rows=[];
+  cups.forEach(x=>editionsOf(x).forEach(e=>{if([1,2,3,4].some(k=>e[k]===id))rows.push({cup:x,...e})}));
+  rows.sort((a,b)=>(parseFloat(a.ed)||0)-(parseFloat(b.ed)||0)||a.cup.localeCompare(b.cup));
+  const who=t=>t?`<span ${t!==id?`data-act="tpgo" data-id="${t}" style="cursor:pointer"`:''}>${badge(team(t),'sm')} ${esc((team(t)||{}).name||'?')}</span>`:'';
+  return rows.length?`<div style="overflow-x:auto;max-height:420px;overflow-y:auto"><table class="tb stk"><tr><th>Cup</th><th>Edition</th><th>🏆 Champion</th><th>2nd</th><th>3rd</th><th>4th</th></tr>${rows.map(e=>`<tr><td>${esc(e.cup)}</td><td>${esc(e.ed)}</td>${[1,2,3,4].map(k=>`<td class="${e[k]===id?'me':''}">${who(e[k])}</td>`).join('')}</tr>`).join('')}</table></div>`:`<p class="note">${mode==='nat'?'No Copa Argentina podium on record.':'No podium finishes on record.'}</p>`;
+}
+function renderTeamPage(){
+  const y0=window.scrollY;
+  if(!TP||!team(TP))TP=(S.teams.slice().sort(byName)[0]||{}).id;
+  const t=team(TP);
+  if(!t){$('#v-cup').innerHTML='<section class="wide"><h2>Team page</h2><p class="note">Your library is empty.</p></section>';return}
+  const tt=teamTotals(TP),RM=rankMap(),NP=natPoints(),ti=teamTitles(TP),np=NP[TP]||{base:0,lg:0,intl:0,ca:0},nt=np.base+np.lg+np.intl+np.ca;
+  const natRank=isArg(t)?1+Object.keys(NP).filter(id=>id!==TP&&NP[id].base+NP[id].lg+NP[id].intl+NP[id].ca>nt).length:null;
+  const nI=Object.values(ti.it).reduce((a,l)=>a+l.length,0),ic=(n,c)=>`${n} <span class="tr ${c}">🏆</span>`;
+  const R=recs(),hist=S.seasons.map(x=>{
+    const r=R.find(y=>y.s===x.id&&y.o.includes(TP)),dv=S.div[x.id]&&S.div[x.id][TP];
+    return r?{k:x.label,d:r.d,n:r.n,p:r.o.indexOf(TP)+1,t:r.o.length}:dv?{k:x.label,d:dv}:null;
+  }).filter(Boolean).reverse();
+  const hh=h2h(TP),opp=Object.keys(hh).filter(id=>team(id)).sort((a,b)=>hh[b].p-hh[a].p||team(a).name.localeCompare(team(b).name)).slice(0,25);
+  const pill=l=>l.length?l.map(x=>`<span class="pill">${esc(x)}</span>`).join(' '):'<span class="note">none</span>';
+  $('#v-cup').innerHTML=`<section class="wide"><h2>Team page</h2><div class="row"><input id="tpsel" list="dl-tp" value="${esc(t.name)}" placeholder="Type a team…" style="width:240px"><datalist id="dl-tp">${S.teams.slice().sort(byName).map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist>${badge(t,'lg')}<div><div class="nm">${esc(t.name)}</div><div class="note">${esc(t.country||'No country')} · ${t.strength} chances in the library</div></div></div>`+
+    `<div class="statgrid"><div class="scard"><div class="note">Cups table</div><b>${RM.rank.get(TP)?'#'+RM.rank.get(TP):isOther(t)?'Others':'–'}</b> · ${RM.pm[TP]||0} pts<div class="note">${tt.n} cups · 1st ${tt[1]} · 2nd ${tt[2]} · 3rd ${tt[3]} · 4th ${tt[4]} · QF ${tt.QF}</div></div>`+
+    `<div class="scard"><div class="note">National points</div><b>${natRank?'#'+natRank:'–'}</b> · ${nt} pts<div class="note">base ${np.base} · league ${np.lg} · cups ${np.intl} · Copa Arg. ${np.ca}</div></div>`+
+    `<div class="scard"><div class="note">Titles</div><b>${ic(ti.lg.length,'tr-gold')} ${ic(nI,'tr-silver')} ${ic(ti.ca.length,'tr-blue')}</b><div class="note">league · international · Copa Argentina</div></div></div>`+
+    kitEditorHtml(t)+`<h3>Titles</h3><div><span class="tr tr-gold">🏆</span> <b>League</b> ${pill(ti.lg)}</div><div style="margin-top:6px"><span class="tr tr-silver">🏆</span> <b>International cups</b>${Object.keys(ti.it).sort().map(k=>`<div>${esc(k)} <small class="note">×${ti.it[k].length}: ${esc(ti.it[k].filter(Boolean).sort((a,b)=>parseFloat(a)-parseFloat(b)).join(', '))}</small></div>`).join('')||' <span class="note">none</span>'}</div><div style="margin-top:6px"><span class="tr tr-blue">🏆</span> <b>Copa Argentina</b> ${pill(ti.ca)}</div>`+
+    `<h3>Season by season</h3>`+(hist.length?`<div style="max-height:360px;overflow:auto"><table class="tb stk"><tr><th>Season</th><th>Div.</th><th>League</th><th>Position</th></tr>${hist.map(r=>`<tr><td>${esc(r.k)}</td><td>${r.d>=3?'3+':r.d}</td><td class="note">${esc(r.n||'')}</td><td>${r.p?`<b>${r.p}</b> / ${r.t}`:''}</td></tr>`).join('')}</table></div>`:'<p class="note">No season on record.</p>')+
+    `<h3><span class="tr tr-silver">🏆</span> International cup podiums</h3>${podiumsHtml(TP)}`+(isArg(t)||ti.ca.length?`<h3><span class="tr tr-blue">🏆</span> Copa Argentina podiums</h3>${podiumsHtml(TP,'nat')}`:'')+
+    `<h3>Head to head <small class="note">(matches played in the game; a shootout counts as a draw)</small></h3>`+(opp.length?`<div style="max-height:360px;overflow:auto"><table class="tb stk"><tr><th>Opponent</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th></tr>${opp.map(o=>{const r=hh[o];return `<tr><td><span data-act="tpgo" data-id="${o}" style="cursor:pointer">${badge(team(o),'sm')} ${esc(team(o).name)}</span></td><td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.gc}</td></tr>`}).join('')}</table></div>`:'<p class="note">No match played in the game yet.</p>')+`</section>`;
+  window.scrollTo(0,y0);
+}
+
+/* ---------- records and season recap ---------- */
+const ordn=n=>n+(n%10===1&&n%100!==11?'st':n%10===2&&n%100!==12?'nd':n%10===3&&n%100!==13?'rd':'th');
+function seasonTables(){ // finished league tables, played in the game or imported
+  const out=[],seen=new Set();
+  S.comps.filter(c=>c.type==='league'&&c.gm.length&&c.gm.every(m=>m.r)).forEach(c=>{
+    const k=c.season?c.season+'|'+(c.div||1):c.id;seen.add(k);
+    out.push({name:c.name,d:c.div||1,rows:table(c,0).map(r=>({t:r.id,pts:r.pts,p:r.p,gf:r.gf,ga:r.ga}))});
+  });
+  S.tables.forEach(t=>{if(!seen.has(t.s+'|'+t.d))out.push({name:tn(t),d:t.d,rows:t.rows.map(r=>({t:r.t,pts:r.pts,p:r.p,gf:r.gf,ga:r.ga}))})});
+  return out;
+}
+function recapHtml(sid){
+  const Dall=d1data(),D=Dall[sid];
+  if(!D||!D.o.length)return '<p class="note">No first division data for this season.</p>';
+  const ss=S.seasons,idx=ss.findIndex(x=>x.id===sid),o=D.o,L=[];
+  const lg=S.comps.find(c=>c.type==='league'&&c.official&&c.season===sid&&(c.div||1)===1&&c.gm.length&&c.gm.every(m=>m.r));
+  const tbl=lg?table(lg,0).map(r=>({t:r.id,pts:r.pts,p:r.p,gf:r.gf,ga:r.ga})):((S.tables.find(t=>t.s===sid&&t.d===1)||{}).rows||null);
+  const nm=id=>team(id)?`${badge(team(id),'sm')} ${esc(team(id).name)}`:'?',row=id=>tbl&&tbl.find(r=>r.t===id);
+  const prev=ss.slice(0,idx).map(x=>Dall[x.id]).filter(d=>d&&d.o.length&&d.done),pc=prev.map(d=>d.o[0]),champ=o[0],times=pc.filter(x=>x===champ).length;
+  let streak=0;for(let i=pc.length-1;i>=0&&pc[i]===champ;i--)streak++;
+  const c1=row(champ),c2=row(o[1]);
+  L.push(`🏆 Champion: ${nm(champ)}${c1?` with ${c1.pts} pts${c2?`, ${c1.pts-c2.pts} clear of ${esc(team(o[1]).name)}`:''}`:''}. ${times===0?'First title on record!':`Title number ${times+1} on record${streak?`, ${streak+1} in a row`:''}.`}`);
+  if(o.length>1)L.push(`Podium: 🥈 ${nm(o[1])}${o[2]?` · 🥉 ${nm(o[2])}`:''}${o[3]?` · 4th ${nm(o[3])}`:''}`);
+  if(o.length>5)L.push(`⬇️ Last places: ${o.slice(-3).reverse().map(nm).join(', ')}`);
+  if(tbl&&tbl.length&&tbl.every(r=>r.gf!=null&&r.ga!=null)){
+    const ba=tbl.slice().sort((a,b)=>b.gf-a.gf)[0],bd=tbl.slice().sort((a,b)=>a.ga-b.ga)[0];
+    L.push(`⚔️ Best attack: ${nm(ba.t)} (${ba.gf} goals). 🛡️ Best defence: ${nm(bd.t)} (${bd.ga} conceded).`);
+  }
+  if(lg){
+    const ms=allM(lg).filter(m=>m.r&&!m.dm),big=ms.slice().sort((a,b)=>Math.abs(b.r.g[0]-b.r.g[1])-Math.abs(a.r.g[0]-a.r.g[1]))[0],hi=ms.slice().sort((a,b)=>b.r.g[0]+b.r.g[1]-a.r.g[0]-a.r.g[1])[0];
+    if(big)L.push(`💥 Biggest win: ${nm(big.h)} <b>${big.r.g[0]}–${big.r.g[1]}</b> ${nm(big.a)}`);
+    if(hi&&hi!==big)L.push(`🎯 Most goals in a match: ${nm(hi.h)} <b>${hi.r.g[0]}–${hi.r.g[1]}</b> ${nm(hi.a)}`);
+    const str=lg.teams.slice().sort((a,b)=>b.s-a.s).map(x=>x.id),d=o.map((id,i)=>({id,pos:i,delta:str.indexOf(id)-i})).filter(x=>str.includes(x.id)).sort((a,b)=>b.delta-a.delta);
+    if(d.length&&d[0].delta>=3)L.push(`✨ Surprise of the season: ${nm(d[0].id)} finished #${d[0].pos+1} with only the ${ordn(str.indexOf(d[0].id)+1)} highest chances.`);
+    const w=d[d.length-1];if(w&&w.delta<=-3)L.push(`😬 Disappointment: ${nm(w.id)} finished #${w.pos+1} despite the ${ordn(str.indexOf(w.id)+1)} highest chances.`);
+  }
+  const pd=prev[prev.length-1];
+  if(pd){
+    const ch=o.map((id,i)=>({id,i,delta:pd.o.indexOf(id)>=0?pd.o.indexOf(id)-i:null})).filter(x=>x.delta!==null).sort((a,b)=>b.delta-a.delta);
+    if(ch.length&&ch[0].delta>=3)L.push(`📈 Biggest climb: ${nm(ch[0].id)}, ${ordn(pd.o.indexOf(ch[0].id)+1)} → ${ordn(ch[0].i+1)} (+${ch[0].delta}).`);
+    const f=ch[ch.length-1];if(f&&f.delta<=-3)L.push(`📉 Biggest fall: ${nm(f.id)}, ${ordn(pd.o.indexOf(f.id)+1)} → ${ordn(f.i+1)} (${f.delta}).`);
+    const up=o.filter(id=>!pd.o.includes(id)),down=pd.o.filter(id=>!o.includes(id));
+    if(up.length)L.push(`⬆️ New in first division: ${up.map(nm).join(', ')}`);
+    if(down.length)L.push(`⬇️ Left first division since last season: ${down.map(nm).join(', ')}`);
+  }
+  return L.map(x=>`<p style="margin:6px 0">${x}</p>`).join('');
+}
+function renderRecords(){
+  const y0=window.scrollY,PM=playedMatches(),ST=seasonTables(),D=d1data(),nm=id=>team(id)?`${badge(team(id),'sm')} ${esc(team(id).name)}`:'?';
+  const mr=PM.map(({c,m})=>({c,m,diff:Math.abs(m.r.g[0]-m.r.g[1]),tot:m.r.g[0]+m.r.g[1]}));
+  const mline=x=>`<div class="rrow">${nm(x.m.h)} <b>${x.m.r.g[0]}–${x.m.r.g[1]}</b> ${nm(x.m.a)}${x.m.r.p?` <small>(pens ${x.m.r.p[0]}–${x.m.r.p[1]})</small>`:''} <small class="note">· ${esc(x.c.name)}</small></div>`;
+  const card=(t,b)=>`<div class="scard"><h3 style="margin-top:0">${t}</h3>${b||'<p class="note">No data yet.</p>'}</div>`;
+  const flat=ST.flatMap(s=>s.rows.map(r=>({...r,name:s.name,d:s.d})));
+  const line=(r,txt)=>`<div class="rrow">${nm(r.t)} <b>${txt}</b> <small class="note">· ${esc(r.name)}</small></div>`;
+  const marg=ST.filter(s=>s.rows.length>1).map(s=>{const r=s.rows.slice().sort((a,b)=>b.pts-a.pts);return {t:r[0].t,v:r[0].pts-r[1].pts,name:s.name}}).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,8);
+  const withG=flat.filter(r=>r.gf!=null&&r.ga!=null&&r.p>0);
+  const st=[];S.comps.filter(c=>c.type==='league').forEach(c=>c.teams.forEach(x=>{
+    let w=0,u=0,bw=0,bu=0;
+    c.gm.filter(m=>m.r&&(m.h===x.id||m.a===x.id)).sort((a,b)=>a.md-b.md).forEach(m=>{const h=m.h===x.id,gf=h?m.r.g[0]:m.r.g[1],gc=h?m.r.g[1]:m.r.g[0];w=gf>gc?w+1:0;u=gf>=gc?u+1:0;bw=Math.max(bw,w);bu=Math.max(bu,u)});
+    st.push({t:x.id,bw,bu,name:c.name});
+  }));
+  const order=S.seasons.filter(x=>D[x.id]&&D[x.id].done&&D[x.id].o[0]),cnt={},best={};let cur=null,run=0;
+  order.forEach(x=>{const w=D[x.id].o[0];cnt[w]=(cnt[w]||0)+1;if(w===cur)run++;else{cur=w;run=1}best[w]=Math.max(best[w]||0,run)});
+  const cc=S.comps.filter(c=>c.type!=='league'&&c.counted&&c.counted.stats);
+  const cg=cc.map(c=>{const w=c.counted.recs.find(r=>r.p===1);return w&&{c,t:w.t,gf:c.counted.stats[w.t].gf}}).filter(Boolean).sort((a,b)=>b.gf-a.gf).slice(0,5);
+  const hs=cc.map(c=>({c,gf:Object.values(c.counted.stats).reduce((a,s)=>a+s.gf,0)})).sort((a,b)=>b.gf-a.gf).slice(0,3);
+  const seasons=S.seasons.filter(x=>D[x.id]&&D[x.id].o.length);
+  if(!RCS||!seasons.some(x=>x.id===RCS))RCS=seasons.length?seasons[seasons.length-1].id:null;
+  const top=(o,k,n=5)=>Object.keys(o).filter(id=>team(id)&&o[id]>(k||0)).sort((a,b)=>o[b]-o[a]).slice(0,n);
+  $('#v-cup').innerHTML=`<section class="wide"><h2>Records</h2><h3>Season recap</h3>`+(seasons.length?`<div class="row"><select id="rcsel">${seasons.slice().reverse().map(x=>`<option value="${x.id}" ${x.id===RCS?'selected':''}>${esc(x.label)}</option>`).join('')}</select></div><div class="scard" style="margin-top:8px">${recapHtml(RCS)}</div>`:'<p class="note">No first division season on record yet.</p>')+
+    `<h3>All-time records</h3><div class="grid2">`+
+    card('Biggest wins',mr.slice().sort((a,b)=>b.diff-a.diff||b.tot-a.tot).slice(0,8).map(mline).join(''))+
+    card('Most goals in a match',mr.slice().sort((a,b)=>b.tot-a.tot||b.diff-a.diff).slice(0,8).map(mline).join(''))+
+    card('Most points in a league season',flat.slice().sort((a,b)=>b.pts-a.pts).slice(0,8).map(r=>line(r,r.pts+' pts'+(r.p?` in ${r.p}`:''))).join(''))+
+    card('Biggest title margin',marg.map(r=>line(r,'+'+r.v)).join(''))+
+    card('Best attacks',withG.slice().sort((a,b)=>b.gf-a.gf).slice(0,6).map(r=>line(r,r.gf+' goals')).join(''))+
+    card('Best defences',withG.slice().sort((a,b)=>a.ga-b.ga).slice(0,6).map(r=>line(r,r.ga+' conceded')).join(''))+
+    card('Longest winning runs (leagues in the game)',st.filter(x=>x.bw>1).sort((a,b)=>b.bw-a.bw).slice(0,5).map(r=>line(r,r.bw+' wins')).join(''))+
+    card('Longest unbeaten runs (leagues in the game)',st.filter(x=>x.bu>1).sort((a,b)=>b.bu-a.bu).slice(0,5).map(r=>line(r,r.bu+' matches')).join(''))+
+    card('Most league titles',top(cnt,0).map(id=>`<div class="rrow">${nm(id)} <b>${cnt[id]}</b></div>`).join(''))+
+    card('Most titles in a row',top(best,1).map(id=>`<div class="rrow">${nm(id)} <b>${best[id]}</b></div>`).join(''))+
+    card('Champions who scored the most in a cup',cg.map(x=>`<div class="rrow">${nm(x.t)} <b>${x.gf} goals</b> <small class="note">· ${esc(x.c.name)}</small></div>`).join(''))+
+    card('Highest scoring cups',hs.map(x=>`<div class="rrow">${esc(x.c.name)} <b>${x.gf} goals</b></div>`).join(''))+
+    `</div><p class="note">Records come from matches played in the game, and from the league tables you imported (points, and goals when you gave them).</p></section>`;
+  window.scrollTo(0,y0);
+}
+
+let CHY='',CHQ='',NROPEN=false;
+function applyCHQ(){document.querySelectorAll('#v-cup [data-n]').forEach(e=>{e.hidden=!!CHQ&&!e.dataset.n.includes(CHQ)})}
+function elimSet(c){ // teams already out of a cup (grey in "Teams and strength")
+  const out=new Set();
+  if(c.type==='league'||!c.ko.length)return out;
+  const first=new Set(c.ko[0].ties.flatMap(T=>T.b?[T.a,T.b]:[T.a]));
+  c.teams.forEach(x=>{if(!first.has(x.id))out.add(x.id)});
+  c.ko.forEach(r=>r.ties.forEach(T=>{if(T.b&&T.w)out.add(T.w===T.a?T.b:T.a)}));
+  return out;
+}
+function champsHtml(c){ // champions of every earlier edition of this cup, and ??? for the edition being played
+  if(c.type==='league'||!c.series)return '';
+  const ser=cn(c.series),cur=c.ko.length?c.ko[c.ko.length-1]:null,alive=new Set(cur?cur.ties.flatMap(T=>T.b?[T.a,T.b]:[T.a]):[]);
+  const eds=editionsOf(ser).filter(e=>e[1]&&!(e.ed===c.edition&&e.series===c.series));
+  if(!eds.length)return '';
+  const fin=cur&&cur.ties.length===1&&cur.ties[0].w,rows=eds.map(e=>({ed:e.ed,t:e[1]}));
+  rows.push({ed:c.edition||'now',t:fin?cur.ties[0].w:null});
+  const shown=CLMORE?rows:rows.slice(-11),more=rows.length-shown.length;
+  return `<aside class="facts" style="${CLMORE?'max-height:70vh;overflow:auto':''}"><h3>${esc(ser)}: champions</h3>${more>0?`<p class="note" style="margin:4px 0">… ${more} earlier edition${more>1?'s':''} <button class="link" data-act="champmore" style="color:var(--gold)">Show more</button></p>`:''}`+
+    shown.map(r=>`<div class="rrow" ${r.t&&alive.has(r.t)?'style="color:var(--gold)"':''}>${esc(r.ed)} · ${r.t&&team(r.t)?`${badge(team(r.t),'sm')} ${esc(team(r.t).name)}`:'<span class="badge sm">?</span> ???'}</div>`).join('')+
+    (CLMORE&&rows.length>11?`<p class="note" style="margin:6px 0 0"><button class="link" data-act="champmore" style="color:var(--gold)">Show less</button></p>`:'')+(alive.size?`<p class="note" style="margin:6px 0 0">Gold = still in the cup</p>`:'')+`</aside>`;
+}
+function factsFor(c){ // curiosities about the teams still alive, compared with each other
+  const cur=c.ko.find(r=>r.ties.some(T=>!T.w))||c.ko[c.ko.length-1];if(!cur)return [];
+  const R=cur.name,alive=[...new Set(cur.ties.flatMap(T=>T.b?[T.a,T.b]:[T.a]))],N=alive.length;if(N<2)return [];
+  const nm=id=>tm(c,id).name,list=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1],s=n=>n===1?'':'s';
+  const RM=rankMap(),hon=cupRecs().filter(x=>x.p===1&&!isCopaArg(x.series)),ed=parseFloat(c.edition),now=ed>1800?ed:new Date().getFullYear(),ser=c.series?cn(c.series):'';
+  const left=N===2?'the two finalists':`the ${N} teams left`,Tm={},out=[],add=(p,x,ids)=>out.push([p,x,ids||[]]);
+  alive.forEach(id=>{
+    const t=teamTotals(id),won=t[1]+t[2]+t[3]+t[4],w=hon.filter(x=>x.t===id),yr=a=>a.map(x=>parseFloat(x.ed)).filter(y=>y>1800),y=yr(w),sw=w.filter(x=>cn(x.series)===ser),sy=yr(sw);
+    Tm[id]={t,won,reach:won+t.QF,titles:Math.max(t[1],w.length),last:y.length?Math.max(...y):null,ser:sw.length,serLast:sy.length?Math.max(...sy):null,rank:RM.rank.get(id),pts:RM.pm[id]||0,n:t.n,oth:isOther(team(id))};
+  });
+  const real=alive.filter(id=>!Tm[id].oth);
+  // the defending champion
+  if(ser){
+    const prev=editionsOf(ser).filter(e=>e[1]&&!(e.ed===c.edition&&e.series===c.series)&&(!(ed>0)||parseFloat(e.ed)<ed)),last=prev[prev.length-1];
+    if(last){const d=last[1];
+      if(alive.includes(d))add(9,`${nm(d)} is the defending champion: it won the ${ser} in ${last.ed}.`,[d]);
+      else if(c.teams.some(x=>x.id===d))add(6,`The defending champion, ${nm(d)}, is already out.`,[d]);
+    }
+  }
+  // this cup's past champions
+  if(ser&&hon.some(x=>cn(x.series)===ser)){
+    const sc=alive.filter(id=>Tm[id].ser>0);
+    if(!sc.length)add(9,`None of ${left} has ever won the ${ser}: a first-time champion is guaranteed!`);
+    else if(sc.length===1)add(9,`Out of ${left}, only ${nm(sc[0])} has won the ${ser} before (${Tm[sc[0]].ser} time${s(Tm[sc[0]].ser)}).`,sc);
+    else if(sc.length<=4)add(5,`${sc.length} of ${left} have won the ${ser}: ${list(sc.map(nm))}.`,sc);
+    const dry=sc.filter(id=>Tm[id].serLast&&now-Tm[id].serLast>=8).sort((a,b)=>Tm[a].serLast-Tm[b].serLast)[0];
+    if(dry)add(7,`${nm(dry)} last won the ${ser} in ${Tm[dry].serLast}: ${now-Tm[dry].serLast} years ago.`,[dry]);
+  }
+  // international titles of any cup
+  const tc=alive.filter(id=>Tm[id].titles>0),scAll=ser?alive.filter(id=>Tm[id].ser>0):[];
+  if(!tc.length)add(8,`Not a single one of ${left} has ever won an international title.`);
+  else if(tc.length===1&&!(scAll.length===1&&scAll[0]===tc[0]))add(8,`Out of ${left}, only ${nm(tc[0])} has ever won an international title.`,tc);
+  const top=tc.slice().sort((a,b)=>Tm[b].titles-Tm[a].titles);
+  if(top.length>1&&Tm[top[0]].titles>Tm[top[1]].titles&&Tm[top[0]].titles>=2)add(6,`${nm(top[0])} leads ${left} with ${Tm[top[0]].titles} international titles (next best: ${Tm[top[1]].titles}).`,[top[0]]);
+  const dr=alive.filter(id=>Tm[id].last&&now-Tm[id].last>=8).sort((a,b)=>Tm[a].last-Tm[b].last)[0];
+  if(dr&&!(ser&&Tm[dr].serLast===Tm[dr].last))add(7,`${nm(dr)} hasn't won an international title since ${Tm[dr].last}: it's been ${now-Tm[dr].last} years.`,[dr]);
+  // first times, and "for the Nth time" for everyone
+  const first=(ids,what)=>{if(ids.length)add(8,`${list(ids.map(nm))} ${ids.length>1?'have':'has'} never reached ${what} before: a first time${ids.length>1?' for each of them':''}!`,ids)};
+  if(R==='Quarter-finals')first(alive.filter(id=>Tm[id].n>0&&Tm[id].reach===0),'the quarter-finals');
+  if(R==='Semi-finals')first(alive.filter(id=>Tm[id].n>0&&Tm[id].won===0),'a semi-final');
+  if(R==='Final')first(alive.filter(id=>Tm[id].n>0&&Tm[id].t[1]+Tm[id].t[2]===0),'a final');
+  alive.forEach(id=>{const T=Tm[id];if(T.n<3)return;
+    if(R==='Quarter-finals'&&T.reach>0)add(3,`${nm(id)} reaches the quarter-finals for the ${ordn(T.reach+1)} time, in its ${ordn(T.n+1)} cup.`,[id]);
+    if(R==='Semi-finals'&&T.won>0)add(3,`${nm(id)} plays a semi-final for the ${ordn(T.won+1)} time on record.`,[id]);
+    if(R==='Final'&&T.t[1]+T.t[2]>0)add(3,`${nm(id)} plays its ${ordn(T.t[1]+T.t[2]+1)} final (${T.t[1]} won so far).`,[id]);
+  });
+  const reg=alive.filter(id=>Tm[id].n>=8).sort((a,b)=>Tm[b].reach/Tm[b].n-Tm[a].reach/Tm[a].n)[0];
+  if(reg&&Tm[reg].reach>0&&alive.filter(id=>Tm[id].n>=8).length>=3)add(5,`${nm(reg)} has reached the quarter-finals in ${Tm[reg].reach} of its ${Tm[reg].n} cups (${Math.round(100*Tm[reg].reach/Tm[reg].n)}%), the best record left.`,[reg]);
+  // position in the cups table
+  const rk=real.filter(id=>Tm[id].rank).sort((a,b)=>Tm[a].rank-Tm[b].rank);
+  if(RM.rank.size>=10){
+    const t10=real.filter(id=>Tm[id].rank&&Tm[id].rank<=10).sort((a,b)=>Tm[a].rank-Tm[b].rank);
+    if(!t10.length)add(8,`None of the top 10 teams in the cups table is still alive.`);
+    else if(t10.length<=3&&N>=4)add(7,`Only ${t10.length===1?'one':t10.length} of the top 10 in the cups table ${t10.length===1?'is':'are'} still in: ${list(t10.map(id=>`${nm(id)} (#${Tm[id].rank})`))}.`,t10);
+  }
+  if(N===2&&rk.length===2)add(6,`In the cups table, ${nm(rk[0])} (#${Tm[rk[0]].rank}, ${Tm[rk[0]].pts} pts) meets ${nm(rk[1])} (#${Tm[rk[1]].rank}, ${Tm[rk[1]].pts} pts).`,rk);
+  else if(rk.length>=3){
+    add(6,`${nm(rk[0])} is the highest ranked team left: #${Tm[rk[0]].rank} in the cups table, ${Tm[rk[0]].pts} pts.`,[rk[0]]);
+    add(5,`${nm(rk[rk.length-1])} is the lowest ranked team still alive: #${Tm[rk[rk.length-1]].rank} in the cups table.`,[rk[rk.length-1]]);
+  }
+  // experience
+  const ex=alive.filter(id=>Tm[id].n>0).sort((a,b)=>Tm[b].n-Tm[a].n);
+  if(ex.length>=3&&Tm[ex[0]].n>Tm[ex[ex.length-1]].n)add(4,`${nm(ex[0])} is the most experienced team left, with ${Tm[ex[0]].n} cups played. ${nm(ex[ex.length-1])} has played just ${Tm[ex[ex.length-1]].n}.`,[ex[0],ex[ex.length-1]]);
+  const nev=alive.filter(id=>Tm[id].n>=8&&Tm[id].titles===0).sort((a,b)=>Tm[b].n-Tm[a].n)[0];
+  if(nev)add(6,`${nm(nev)} has played ${Tm[nev].n} cups without ever winning one.`,[nev]);
+  // countries
+  const by={};alive.forEach(id=>{const k=(team(id).country||'').trim();if(k)(by[k]=by[k]||[]).push(id)});
+  const start={};c.teams.forEach(x=>{const k=((team(x.id)||{}).country||'').trim();if(k)start[k]=(start[k]||0)+1});
+  Object.entries(by).forEach(([k,l])=>{
+    if(N>=4&&l.length>1&&l.length>=Math.ceil(N/2))add(5,`${k} has ${l.length} of ${left}.`,l);
+    if(l.length===1&&(start[k]||0)>=3)add(6,`${nm(l[0])} is the last team from ${k} still alive (${start[k]} started the cup).`,l);
+  });
+  // what a win would bring (only the placement points are known in advance)
+  if(c.series&&!excl(c.series)&&['Quarter-finals','Semi-finals','Final'].includes(R)){
+    const gain=ptsFor({series:c.series,p:1});
+    if(gain>0){
+      let best=null;
+      real.forEach(id=>{const p0=Tm[id].pts,r0=Tm[id].rank||rankOf(id,p0,RM.pm),r1=rankOf(id,p0+gain,RM.pm),d=r0-r1;if(!best||d>best.d)best={id,r0,r1,d}});
+      if(best){
+        if(best.r1===1&&best.r0>1)add(9,`If ${nm(best.id)} wins this cup, they take the #1 spot in the all-time points list!!`,[best.id]);
+        else if(best.r0>10&&best.r1<=10)add(9,`If ${nm(best.id)} wins this cup, they will enter the all-time Top 10 of points (from #${best.r0} to #${best.r1})!!`,[best.id]);
+        else if(best.d>=3)add(5,`If ${nm(best.id)} wins this cup, they climb from #${best.r0} to #${best.r1} in the all-time points list.`,[best.id]);
+      }
+    }
+  }
+  if(R==='Final'){const T=cur.ties[0];if(T&&T.b)pastFinals(T.a,T.b).forEach(f=>add(9,`${nm(T.a)} and ${nm(T.b)} already met in a final: ${f.s} ${f.ed}, ${nm(f.w)} won${f.score?' '+f.score:''}.`,[T.a,T.b]))}
+  let h=0;for(const ch of c.id+R)h=(h*31+ch.charCodeAt(0))>>>0;
+  const rnd=()=>(h=(h*1664525+1013904223)>>>0)/4294967296;   // same facts every time the page redraws
+  const picked=[],used={};   // no team gets more than two facts, so the others get a turn
+  out.map(([p,x,ids])=>[p+rnd()*0.9,x,ids]).sort((a,b)=>b[0]-a[0]).forEach(([p,x,ids])=>{
+    if(picked.length>=5||ids.some(id=>(used[id]||0)>=2))return;
+    ids.forEach(id=>used[id]=(used[id]||0)+1);picked.push(x);
+  });
+  return picked;
+}
+
+let CLMORE=false;
+function moveMap(c){ // teams that arrived from another division (promoted or relegated), from the last season with data for them
+  const out={};if(!c.season)return out;
+  const ss=S.seasons,i=ss.findIndex(x=>x.id===c.season);if(i<=0)return out;
+  const R=recs(),d=c.div||1;
+  c.teams.forEach(x=>{
+    for(let j=i-1;j>=0;j--){
+      const sid=ss[j].id,r=R.find(y=>y.s===sid&&y.o.includes(x.id)),dv=r?r.d:(S.div[sid]&&S.div[sid][x.id]);
+      if(dv){if(dv>d)out[x.id]={d0:dv,up:true};else if(dv<d)out[x.id]={d0:dv,up:false};break}
+    }
+  });
+  return out;
+}
+
+let D1SEL=null,CUPSEL=null,PLH=null;
+function posHistory(c){ // position of every team after each matchday
+  const ids=c.teams.map(x=>x.id),mds=[...new Set(c.gm.map(m=>m.md))].sort((a,b)=>a-b),acc={},out={};
+  ids.forEach(i=>{acc[i]={pts:0,gf:0,ga:0};out[i]=[]});
+  mds.forEach(md=>{
+    c.gm.filter(m=>m.md===md&&m.r).forEach(m=>{const [x,y]=m.r.g,H=acc[m.h],A=acc[m.a];H.gf+=x;H.ga+=y;A.gf+=y;A.ga+=x;if(x>y)H.pts+=3;else if(x<y)A.pts+=3;else{H.pts++;A.pts++}});
+    ids.slice().sort((a,b)=>acc[b].pts-acc[a].pts||(acc[b].gf-acc[b].ga)-(acc[a].gf-acc[a].ga)||acc[b].gf-acc[a].gf||tm(c,a).name.localeCompare(tm(c,b).name)).forEach((id,i)=>out[id].push(i+1));
+  });
+  return {mds,out};
+}
+function chartHtml(c){ // line chart: position of each team over the matchdays
+  const {mds,out}=posHistory(c),n=c.teams.length;if(mds.length<2||n<2)return '';
+  const W=980,L=34,R=150,T=16,B=28,rh=Math.max(15,Math.min(24,560/n)),H=T+B+(n-1)*rh,st=(W-L-R)/(mds.length-1),X=i=>L+i*st,Y=p=>T+(p-1)*rh;
+  const ids=c.teams.map(x=>x.id),col=id=>vis(team(id).color)||`hsl(${(ids.indexOf(id)*137+30)%360} 65% 60%)`,fin=id=>out[id][out[id].length-1];
+  const order=ids.slice().sort((a,b)=>fin(b)-fin(a)).sort((a,b)=>(a===PLH)-(b===PLH));   // the highlighted line is drawn last, on top
+  let g='';
+  for(let p=1;p<=n;p++)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(p)}" y2="${Y(p)}" stroke="#ffffff14"/><text x="${L-8}" y="${Y(p)+4}" text-anchor="end" fill="#93b09f" font-size="11">${p}</text>`;
+  mds.forEach((md,i)=>{if(md%5===0||i===0||i===mds.length-1)g+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle" fill="#93b09f" font-size="11">${md}</text>`});
+  order.forEach(id=>{
+    const pts=out[id].map((p,i)=>`${X(i).toFixed(1)},${Y(p)}`).join(' '),dim=PLH&&PLH!==id,w=PLH===id?4:fin(id)===1?3:2,last=out[id].length-1;
+    g+=`<g data-act="plh" data-id="${id}" style="cursor:pointer" opacity="${dim?.15:.92}"><title>${esc(tm(c,id).name)}</title><polyline points="${pts}" fill="none" stroke="${col(id)}" stroke-width="${w}" stroke-linejoin="round"/><polyline points="${pts}" fill="none" stroke="transparent" stroke-width="12"/><circle cx="${X(last)}" cy="${Y(out[id][last])}" r="4" fill="${col(id)}"/><text x="${X(last)+9}" y="${Y(out[id][last])+4}" fill="${col(id)}" font-size="12" font-weight="${PLH===id?700:400}">${esc(tm(c,id).name.slice(0,18))}</text></g>`;
+  });
+  return `<section class="wide"><h2>Position by matchday</h2><p class="note">Click a line or a team to highlight it, and again to clear. Position 1 is at the top; the numbers below are matchdays.</p><div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="min-width:760px;width:100%">${g}</svg></div><div class="row" style="margin-top:8px">`+
+    ids.slice().sort((a,b)=>fin(a)-fin(b)).map(id=>`<span class="pchip" data-act="plh" data-id="${id}" style="cursor:pointer;${PLH===id?'border-color:var(--gold)':''}"><i style="background:${col(id)};width:10px;height:10px;border-radius:50%;display:inline-block"></i> #${fin(id)} ${esc(tm(c,id).name)}</span>`).join('')+`</div></section>`;
+}
+function poHtml(c){ // promotion / relegation play-offs stay on the league pages after they are played
+  const own=c.closed&&c.po&&c.po.length?[{u:c,title:'Relegation / promotion play-offs'}]:[];
+  const low=S.comps.filter(u=>u!==c&&u.below===c.id&&u.po&&u.po.length).map(u=>({u,title:`Promotion play-offs against ${u.name}`}));
+  return [...own,...low].map(({u,title})=>`<section class="wide"><h2>${esc(title)}</h2>`+u.po.map(m=>{
+    const w=m.r?poWin(m):null;
+    return mrow(u,m,false,w)+(w?`<div class="agg">${w===m.a?`${esc(tm(u,m.a).name)} promoted · ${esc(tm(u,m.h).name)} relegated`:`${esc(tm(u,m.h).name)} stays up · ${esc(tm(u,m.a).name)} stays down`}</div>`:'');
+  }).join('')+`</section>`).join('');
+}
+
+let STCOLS=new Set(),D1COLS=new Set();
+
+/* ---------- kits: a shirt drawn in SVG, home and away ---------- */
+let KSEQ=0,KITSEL={},KCUR={A:'home',B:'home'};
+const hexOk=c=>/^#[0-9a-f]{6}$/i.test(c||''),rgb3=c=>{const n=parseInt(c.slice(1),16);return [n>>16,n>>8&255,n&255]},lum3=c=>{const [r,g,b]=rgb3(c);return (.299*r+.587*g+.114*b)/255};
+function hsl2hex(h,s,l){s/=100;l/=100;const a=s*Math.min(l,1-l),f=n=>{const k=(n+h/30)%12,c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,'0')};return '#'+f(0)+f(8)+f(4)}
+const KPRE={
+  boca:{label:'Boca (band)',a:'#0b3d91',t:'#f6c500',layers:[{p:'band',c:'#f6c500',n:36,r:'b'}]},
+  river:{label:'River (sash)',a:'#ffffff',t:'#d71920',layers:[{p:'sash',c:'#d71920',n:36,r:'b',o:'L'}]},
+  racing:{label:'Racing (stripes)',a:'#6cb4ee',t:'#ffffff',layers:[{p:'vstripes',c:'#ffffff',n:7,r:'b'}]},
+  flamengo:{label:'Flamengo (hoops)',a:'#d6001c',t:'#111111',layers:[{p:'hoops',c:'#111111',n:8,r:'b'}]},
+  velez:{label:'Vélez (V shape)',a:'#ffffff',t:'#0b3d91',layers:[{p:'vee',c:'#0b3d91',n:22,r:'b'}]}
+};
+const KDES=[['vstripes','Vertical stripes'],['hoops','Hoops'],['vlines','Thin vertical lines'],['hlines','Thin horizontal lines'],['band','Band'],['sash','Sash'],['vee','V shape'],['yoke','Top section'],['sleeves','Both sleeves'],['sleeve1','One sleeve'],['gradient','Gradient'],['texture','Texture']];
+const KDEF={vstripes:{n:7},hoops:{n:8},vlines:{n:14},hlines:{n:24},band:{n:36},sash:{n:36,o:'L'},vee:{n:22},yoke:{n:42},sleeves:{},sleeve1:{o:'L'},gradient:{o:'v'},texture:{n:10,o:'dots'}};
+const KOPT={sash:[['L','"/" direction'],['R','"\\" direction']],sleeve1:[['L','Left sleeve'],['R','Right sleeve']],gradient:[['v','Top to bottom'],['h','Left to right']],texture:[['dots','Dots'],['checks','Checks'],['diamonds','Diamonds'],['zigzag','Zigzag']]};
+const KNUM={vstripes:'stripes',hoops:'stripes',vlines:'lines',hlines:'lines',band:'thickness',sash:'thickness',vee:'thickness',yoke:'depth',texture:'size'};
+const KREG=new Set(['vstripes','hoops','vlines','hlines','band','sash','vee','yoke','gradient','texture']);
+const KW={vstripes:.5,hoops:.5,vlines:.1,hlines:.1,band:.2,sash:.25,vee:.15,yoke:.2,sleeves:.15,sleeve1:.07,gradient:.8,texture:.25};
+function defKit(t,side){ // automatic kits: home from the team colour, away in a contrasting colour taken from the home kit
+  if(side==='away'){
+    const h=kitOf(t,'home'),dk=(c,f)=>'#'+rgb3(c).map(x=>Math.round(x*f).toString(16).padStart(2,'0')).join('');
+    if(lum3(h.a)>=.5){const lc=(h.layers[0]||{}).c,c=lc&&lum3(lc)<.5?lc:dk(h.a,.35);return {a:c,t:h.a,halo:true,layers:[]}}
+    return {a:'#ffffff',t:h.a,halo:true,layers:[]};
+  }
+  let h=0;for(const ch of t.id||'x')h=(h*31+ch.charCodeAt(0))>>>0;
+  const base=hexOk(t.color)?t.color:hsl2hex(h%360,55,38);
+  return {a:base,t:lum3(base)<.5?'#ffffff':'#111111',halo:true,layers:[]};
+}
+const kitOf=(t,side)=>{ // stored kit (older single-pattern kits are converted) or the automatic one
+  const sk=(t.kits||{})[side];if(!sk)return defKit(t,side);
+  const k={...defKit(t,side),...sk};
+  if(!sk.layers)k.layers=sk.p&&sk.p!=='solid'?[{p:sk.p,c:sk.b,n:sk.n,r:'b',o:'L'}]:[];
+  return k;
+};
+function kitRGB(k){let c=rgb3(k.a);(k.layers||[]).forEach(l=>{const w=KW[l.p]||.2,lc=l.p==='gradient'?rgb3(l.c||k.a).map((x,i)=>(x+rgb3(l.c2||l.c||k.a)[i])/2):rgb3(l.c||k.a);c=c.map((x,i)=>x*(1-w)+lc[i]*w)});return c}
+function layerSVG(l,pid){ // one design layer: its definitions (gradients, textures) and its drawing
+  const c=l.c||'#ffffff',n=parseFloat(l.n)||0,w=l.r==='w',clip=`clip-path="url(#${pid.split('p')[0]}${w?'o':'c'})"`,x0=w?0:40,xw=w?200:120;
+  const SL='46,30 8,72 34,92 52,70',SR='154,30 192,72 166,92 148,70';
+  let d='',b='';
+  switch(l.p){
+    case 'vstripes':{const m=Math.max(2,Math.min(15,Math.round(n)||7)),bw=xw/m;for(let j=1;j<m;j+=2)b+=`<rect x="${(x0+j*bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="190" fill="${c}"/>`;b=`<g ${clip}>${b}</g>`;break}
+    case 'hoops':{const m=Math.max(2,Math.min(15,Math.round(n)||8)),bh=170/m;for(let j=1;j<m;j+=2)b+=`<rect x="0" y="${(14+j*bh).toFixed(1)}" width="200" height="${bh.toFixed(1)}" fill="${c}"/>`;b=`<g ${clip}>${b}</g>`;break}
+    case 'vlines':{const m=Math.max(1,Math.min(40,Math.round(n)||14));for(let j=1;j<=m;j++)b+=`<rect x="${(x0+j*xw/(m+1)-1.2).toFixed(1)}" y="0" width="2.4" height="190" fill="${c}"/>`;b=`<g ${clip}>${b}</g>`;break}
+    case 'hlines':{const m=Math.max(1,Math.min(40,Math.round(n)||24));for(let j=1;j<=m;j++)b+=`<rect x="0" y="${(14+j*170/(m+1)-1.2).toFixed(1)}" width="200" height="2.4" fill="${c}"/>`;b=`<g ${clip}>${b}</g>`;break}
+    case 'band':b=`<g ${clip}><rect x="0" y="84" width="200" height="${n||36}" fill="${c}"/></g>`;break;
+    case 'sash':b=`<g ${clip}><line ${l.o==='R'?'x1="42" y1="20" x2="156" y2="174"':'x1="158" y1="20" x2="44" y2="174"'} stroke="${c}" stroke-width="${n||36}"/></g>`;break;
+    case 'vee':b=`<g ${clip}><path d="M56,18 L100,106 L144,18" fill="none" stroke="${c}" stroke-width="${n||22}" stroke-linejoin="miter"/></g>`;break;
+    case 'yoke':b=`<g ${clip}><rect x="0" y="0" width="200" height="${18+(n||42)}" fill="${c}"/></g>`;break;
+    case 'sleeves':b=`<polygon points="${SL}" fill="${c}"/><polygon points="${SR}" fill="${c}"/>`;break;
+    case 'sleeve1':b=`<polygon points="${l.o==='R'?SR:SL}" fill="${c}"/>`;break;
+    case 'gradient':{const h=l.o==='h';d=`<linearGradient id="${pid}" gradientUnits="userSpaceOnUse" x1="${h?(w?8:52):0}" y1="${h?0:18}" x2="${h?(w?192:148):0}" y2="${h?0:176}"><stop offset="0" stop-color="${c}"/><stop offset="1" stop-color="${l.c2||'#ffffff'}"/></linearGradient>`;b=`<g ${clip}><rect x="0" y="0" width="200" height="190" fill="url(#${pid})"/></g>`;break}
+    case 'texture':{
+      const s=Math.max(3,Math.min(40,n||10)),o=l.o||'dots';let sh='';
+      if(o==='dots')sh=`<circle cx="${s/2}" cy="${s/2}" r="${s*.2}" fill="${c}"/>`;
+      else if(o==='checks')sh=`<rect width="${s/2}" height="${s/2}" fill="${c}"/><rect x="${s/2}" y="${s/2}" width="${s/2}" height="${s/2}" fill="${c}"/>`;
+      else if(o==='diamonds')sh=`<polygon points="${s/2},${s*.08} ${s*.92},${s/2} ${s/2},${s*.92} ${s*.08},${s/2}" fill="${c}"/>`;
+      else sh=`<path d="M0 ${s*.75} L${s/2} ${s*.25} L${s} ${s*.75}" fill="none" stroke="${c}" stroke-width="${Math.max(1,s*.16)}"/>`;
+      d=`<pattern id="${pid}" width="${s}" height="${s}" patternUnits="userSpaceOnUse">${sh}</pattern>`;b=`<g ${clip}><rect x="0" y="0" width="200" height="190" fill="url(#${pid})"/></g>`;break}
+  }
+  return {d,b};
+}
+function jerseySVG(k,logo,w){ // front of the shirt, crest on the wearer's left chest (the right side as you look at it)
+  const id='k'+(++KSEQ),O='M78,18 L46,30 L8,72 L34,92 L52,70 L52,176 L148,176 L148,70 L166,92 L192,72 L154,30 L122,18 Q100,46 78,18 Z';
+  const T='M78,18 L46,30 L52,70 L52,176 L148,176 L148,70 L154,30 L122,18 Q100,46 78,18 Z',defs=[],body=[];
+  (k.layers||[]).slice(0,3).forEach((l,i)=>{const r=layerSVG(l,`${id}p${i}`);defs.push(r.d);body.push(r.b)});
+  return `<svg viewBox="0 0 200 190" width="${w||110}" style="display:block;margin:auto"><defs><clipPath id="${id}c"><path d="${T}"/></clipPath><clipPath id="${id}o"><path d="${O}"/></clipPath><linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>${defs.join('')}</defs>`+
+    `<path d="${O}" fill="${k.a}"/>${body.join('')}`+
+    `<path d="M46,30 L52,70 M154,30 L148,70" stroke="rgba(0,0,0,.28)" stroke-width="1.5" fill="none"/>`+
+    `<g clip-path="url(#${id}o)"><path d="M78,18 Q100,46 122,18" fill="none" stroke="${k.t}" stroke-width="8"/><path d="M8,72 L34,92 M192,72 L166,92" stroke="${k.t}" stroke-width="10"/></g>`+
+    `<path d="${O}" fill="url(#${id}g)"/>`+
+    (logo?`${k.halo!==false?'<circle cx="126" cy="56" r="17" fill="rgba(255,255,255,.92)" stroke="rgba(8,19,12,.55)" stroke-width="1.5"/>':''}<image href="${esc(logo)}" x="111" y="41" width="30" height="30" preserveAspectRatio="xMidYMid meet"/>`:'')+
+    `<path d="${O}" fill="none" stroke="#08130c" stroke-width="3.2" stroke-linejoin="round"/></svg>`;
+}
+function pickKits(A,B,over){ // home kits, unless they look alike: then the team on the right changes first
+  const k=(t,s)=>kitOf(team(t.id)||t,s),d=(x,y)=>{const p=kitRGB(x),q=kitRGB(y);return Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2])};
+  const a=over.A,b=over.B;if(a&&b)return {A:a,B:b};
+  const combos=a?[[a,'home'],[a,'away']]:b?[['home',b],['away',b]]:[['home','home'],['home','away'],['away','home'],['away','away']];
+  let best=null;
+  for(const [x,y] of combos){const dd=d(k(A,x),k(B,y));if(dd>=105)return {A:x,B:y};if(!best||dd>best.d)best={A:x,B:y,d:dd}}
+  return best;
+}
+function renderKits(){
+  if(!$('#jA'))return;
+  const A=CTX?CTX.A:team(S.selA),B=CTX?CTX.B:team(S.selB);
+  if(!A||!B){$('#jA').innerHTML='';$('#jB').innerHTML='';return}
+  const pk=pickKits(A,B,KITSEL);KCUR=pk;
+  [['A',A],['B',B]].forEach(([k,t])=>{const T=team(t.id)||t;$('#j'+k).innerHTML=jerseySVG(kitOf(T,pk[k]),T.logo,118)+`<button class="kb" data-kit="${k}" title="Switch between the home and the away kit">${pk[k]==='home'?'Home':'Away'} kit ⇄</button>`});
+}
+$('#mp').addEventListener('click',e=>{const b=e.target.closest('button[data-kit]');if(b){const k=b.dataset.kit;KITSEL[k]=KCUR[k]==='home'?'away':'home';renderKits()}});
+let KUNDO={},KLAST={};
+function kitPalette(t){ // every colour already used in the home or the away kit, plus the team colour
+  const set=[],add=c=>{if(hexOk(c)&&!set.includes(c.toLowerCase()))set.push(c.toLowerCase())};
+  ['home','away'].forEach(s=>{const k=kitOf(t,s);add(k.a);add(k.t);(k.layers||[]).forEach(l=>{add(l.c);add(l.c2)})});
+  add(t.color);add('#ffffff');add('#111111');return set;
+}
+function kitEditorHtml(t){
+  const pal=kitPalette(t);
+  const side=(s,label)=>{
+    const k=kitOf(t,s),custom=!!(t.kits&&t.kits[s]),undo=(KUNDO[t.id+'|'+s]||[]).length;
+    const cc=(f,li,val,lab)=>`<span class="cc"><span class="note">${lab}</span><input type="color" data-kit="${s}" data-f="${f}"${li!==undefined?` data-l="${li}"`:''} value="${val}"><span class="sws">${pal.filter(c=>c!==val.toLowerCase()).slice(0,8).map(c=>`<button class="sw" data-act="kitsw" data-side="${s}" data-f="${f}"${li!==undefined?` data-l="${li}"`:''} data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}</span></span>`;
+    const sel=(f,li,val,opts)=>`<select data-kit="${s}" data-f="${f}" data-l="${li}">${opts.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}</select>`;
+    const layers=(k.layers||[]).map((l,i)=>`<div class="lay"><div class="row"><b class="note">Layer ${i+1}</b>${sel('p',i,l.p,KDES)}<button class="link" data-act="kitrm" data-side="${s}" data-l="${i}" title="Remove this layer">✕</button></div>`+
+      `<div class="row" style="margin-top:4px">${KNUM[l.p]?`<label class="note">${KNUM[l.p]} <input type="number" min="1" max="60" data-kit="${s}" data-l="${i}" data-f="n" value="${parseFloat(l.n)||(KDEF[l.p]||{}).n||''}" style="width:60px"></label>`:''}${KOPT[l.p]?sel('o',i,l.o||KDEF[l.p].o,KOPT[l.p]):''}${KREG.has(l.p)?sel('r',i,l.r||'b',[['b','On the body'],['w','Whole shirt (sleeves too)']]):''}</div>`+
+      `<div class="row" style="margin-top:4px">${cc('c',i,l.c||'#ffffff','Colour')}${l.p==='gradient'?cc('c2',i,l.c2||'#ffffff','to'):''}</div></div>`).join('');
+    return `<div class="scard" data-kside="${s}"><div class="row" style="justify-content:space-between"><b>${label} ${custom?'':'<small class="note">(automatic)</small>'}</b><span class="row"><button data-act="kitundo" data-side="${s}" ${undo?'':'disabled'}>Undo${undo?` (${undo})`:''}</button><button data-act="kitreset" data-side="${s}">Back to automatic</button></span></div>`+
+      `<div class="kprev" style="margin:8px 0">${jerseySVG(k,t.logo,150)}</div>`+
+      `<div class="row">${cc('a',undefined,k.a,'Main')}${cc('t',undefined,k.t,'Trim')}</div>`+
+      `<label class="note" style="display:block;margin:6px 0"><input type="checkbox" data-kit="${s}" data-f="halo" ${k.halo!==false?'checked':''} style="width:auto"> Halo behind the crest</label>`+
+      layers+`<div class="row" style="margin-top:8px">${(k.layers||[]).length<3?`<button data-act="kitadd" data-side="${s}">+ Add layer</button>`:'<span class="note">3 layers is the maximum</span>'}<select data-kit="${s}" data-f="preset"><option value="">Start from…</option>${Object.entries(KPRE).map(([v,x])=>`<option value="${v}">${x.label}</option>`).join('')}</select></div></div>`;
+  };
+  return `<h3>Kits</h3><p class="note">The away kit is automatic until you change it. Up to 3 layers of designs go on top of the main colour, in order. Small squares are colours already used in this team's kits. In a match the game switches a kit by itself when two shirts look too alike.</p><div class="statgrid" style="grid-template-columns:repeat(auto-fit,minmax(330px,1fr))">${side('home','Home kit')}${side('away','Away kit')}</div>`;
+}
+function pushUndo(t,side,tag){ // changes made one after another in the same field count as one step
+  const key=t.id+'|'+side,now=Date.now();
+  if(tag&&KLAST.key===key&&KLAST.tag===tag&&now-KLAST.t<1500){KLAST.t=now;return}
+  const st=KUNDO[key]=KUNDO[key]||[];st.push(JSON.stringify((t.kits||{})[side]||null));if(st.length>40)st.shift();
+  KLAST={key,tag,t:now};
+}
+function kitUndo(side){
+  const t=team(TP),st=t&&KUNDO[t.id+'|'+side];if(!st||!st.length)return;
+  const prev=JSON.parse(st.pop());t.kits=t.kits||{};if(prev)t.kits[side]=prev;else delete t.kits[side];
+  KLAST={};save();renderTeamPage();
+}
+function kitEdit(side,f,v,li){
+  const t=team(TP);if(!t)return;
+  pushUndo(t,side,['preset','add','rm','p','o','r'].includes(f)?null:`${f}${li}`);
+  t.kits=t.kits||{};t.kits[side]=JSON.parse(JSON.stringify(kitOf(t,side)));
+  const k=t.kits[side];delete k.p;delete k.b;delete k.n;delete k.s;   // older single-pattern fields are now layers
+  if(f==='preset'){if(!KPRE[v])return;const {label,...x}=KPRE[v];t.kits[side]={...defKit(t,side),...x,halo:k.halo!==false}}
+  else if(f==='add'){if(k.layers.length<3)k.layers.push({p:'vstripes',c:kitPalette(t).find(c=>c!==k.a.toLowerCase())||'#ffffff',n:7,r:'b',o:'L'})}
+  else if(f==='rm')k.layers.splice(li,1);
+  else if(li!==undefined){
+    const l=k.layers[li];if(!l)return;
+    if(f==='p')k.layers[li]={...l,p:v,...(KDEF[v]||{}),r:l.r||'b',c2:l.c2||'#ffffff'};
+    else if(f==='n')l.n=Math.max(1,Math.min(60,parseFloat(v)||1));else l[f]=v;
+  }else if(f==='halo')k.halo=!!v;else k[f]=v;
+  save();
+  if(['preset','add','rm','p','o','r'].includes(f))renderTeamPage();
+  else{const c=document.querySelector(`#v-cup [data-kside="${side}"] .kprev`);if(c)c.innerHTML=jerseySVG(kitOf(t,side),t.logo,150)}
+}
+
+fixSave();renderTabs();renderTeams();showExp();show('home');
+</script>
+</body>
+</html>
